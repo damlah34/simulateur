@@ -112,11 +112,14 @@ export const buildRealEstateProjection = (
     managementFees,
     rentGrowth,
     vacancyWeeks,
+    propertyGrowthRate,
+    sellYear,
   } = input;
 
   const loanAmount = price - contribution;
   const monthlyPayment = calculateMonthlyPayment(loanAmount, rate, duration);
-  const months = duration * 12;
+  const months = sellYear * 12;
+  const totalLoanMonths = duration * 12;
   const monthlyRate = rate / 12 / 100;
 
   let remaining = loanAmount;
@@ -138,20 +141,31 @@ export const buildRealEstateProjection = (
       tax / 12 -
       cfe / 12 -
       accountingFees / 12;
-    const interest = remaining * monthlyRate;
-    const principal = monthlyPayment - interest;
-    remaining -= principal;
-    cumulativeCashflow += monthlyNetRent - monthlyPayment;
+    const isLoanActive = m <= totalLoanMonths;
+    const interest = isLoanActive ? remaining * monthlyRate : 0;
+    const principal = isLoanActive ? monthlyPayment - interest : 0;
+    if (isLoanActive) {
+      remaining -= principal;
+    }
+    cumulativeCashflow += monthlyNetRent - (isLoanActive ? monthlyPayment : 0);
 
     if (m % 12 === 0) {
       const year = m / 12;
       const capitalRepaid = loanAmount - remaining;
-      const enrichissement = capitalRepaid + cumulativeCashflow;
+      const propertyValue =
+        price * Math.pow(1 + propertyGrowthRate / 100, year);
+      const plusValue = propertyValue - price;
+      let enrichissement = capitalRepaid + cumulativeCashflow;
+      if (year === sellYear) {
+        enrichissement += plusValue;
+      }
       results.push({
         year,
         remainingPrincipal: Math.max(0, Math.round(remaining)),
         cumulativeCashflow: Math.round(cumulativeCashflow),
         enrichissement: Math.round(enrichissement),
+        propertyValue: Math.round(propertyValue),
+        plusValue: Math.round(plusValue),
       });
     }
   }

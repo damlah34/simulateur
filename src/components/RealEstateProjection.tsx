@@ -34,6 +34,8 @@ const RealEstateProjection: React.FC = () => {
   const [managementFees, setManagementFees] = useState(0);
   const [rentGrowth, setRentGrowth] = useState(0);
   const [vacancy, setVacancy] = useState(0);
+  const [propertyGrowthRate, setPropertyGrowthRate] = useState(0);
+  const [sellYear, setSellYear] = useState(duration);
   const [notaryFees, setNotaryFees] = useState(calculateNotaryFees(price));
   const [projection, setProjection] = useState<RealEstateYearData[]>([]);
   const [showResults, setShowResults] = useState(false);
@@ -41,6 +43,12 @@ const RealEstateProjection: React.FC = () => {
   useEffect(() => {
     setNotaryFees(calculateNotaryFees(price));
   }, [price]);
+
+  useEffect(() => {
+    if (sellYear > duration) {
+      setSellYear(duration);
+    }
+  }, [duration, sellYear]);
 
   const handleCalculate = () => {
     const data = buildRealEstateProjection({
@@ -59,6 +67,8 @@ const RealEstateProjection: React.FC = () => {
       managementFees,
       rentGrowth,
       vacancyWeeks: vacancy,
+      propertyGrowthRate,
+      sellYear,
     });
     setProjection(data);
     setShowResults(true);
@@ -91,6 +101,8 @@ const RealEstateProjection: React.FC = () => {
     cfe -
     accountingFees;
   const netYield = (netAnnualIncome * 100) / price;
+  const potentialSaleGain =
+    projection.length > 0 ? projection[projection.length - 1].plusValue : 0;
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -232,6 +244,21 @@ const RealEstateProjection: React.FC = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Appréciation annuelle du bien
+                </label>
+                <input
+                  type="range"
+                  min="0"
+                  max="5"
+                  step="0.1"
+                  value={propertyGrowthRate}
+                  onChange={(e) => setPropertyGrowthRate(Number(e.target.value))}
+                  className="w-full"
+                />
+                <p className="text-sm text-gray-500 mt-1">{propertyGrowthRate}%</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Charges mensuelles
                 </label>
                 <div className="relative">
@@ -356,6 +383,20 @@ const RealEstateProjection: React.FC = () => {
                 />
                 <p className="text-sm text-gray-500 mt-1">{vacancy} semaines</p>
               </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Année de revente
+                </label>
+                <input
+                  type="range"
+                  min="1"
+                  max={duration}
+                  value={sellYear}
+                  onChange={(e) => setSellYear(Number(e.target.value))}
+                  className="w-full"
+                />
+                <p className="text-sm text-gray-500 mt-1">{sellYear} ans</p>
+              </div>
               <button
                 onClick={handleCalculate}
                 className="w-full bg-primary-600 text-white py-3 rounded-lg hover:bg-primary-700"
@@ -395,6 +436,14 @@ const RealEstateProjection: React.FC = () => {
                     <p className="text-sm text-gray-500">Rendement net</p>
                     <p className="text-xl font-semibold">{netYield.toFixed(2)}%</p>
                   </div>
+                </div>
+                <div className="bg-white p-6 rounded-xl shadow-lg text-center">
+                  <p className="text-sm text-gray-500">
+                    Plus-value potentielle à l’année {sellYear}
+                  </p>
+                  <p className="text-xl font-semibold">
+                    {formatCurrency(potentialSaleGain)}
+                  </p>
                 </div>
                 <div className="bg-white p-6 rounded-xl shadow-lg">
                   <div className="h-96">
