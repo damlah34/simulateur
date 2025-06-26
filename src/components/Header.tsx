@@ -41,12 +41,22 @@ const Header: React.FC<HeaderProps> = ({ currentPage, onNavigate }) => {
             <button
               onClick={() => onNavigate('inflation-beat')}
               className={`text-sm font-medium transition-colors ${
-                currentPage === 'inflation-beat' 
-                  ? 'text-primary-600 border-b-2 border-primary-600 pb-1' 
+                currentPage === 'inflation-beat'
+                  ? 'text-primary-600 border-b-2 border-primary-600 pb-1'
                   : 'text-gray-500 hover:text-gray-700'
               }`}
             >
               Battre l'inflation
+            </button>
+            <button
+              onClick={() => onNavigate('projet-immo')}
+              className={`text-sm font-medium transition-colors ${
+                currentPage === 'projet-immo'
+                  ? 'text-primary-600 border-b-2 border-primary-600 pb-1'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Projet Immo
             </button>
           </nav>
 

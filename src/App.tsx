@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Header from './components/Header';
 import Home from './components/Home';
 import InflationBeat from './components/InflationBeat';
+import RealEstateProjection from './components/RealEstateProjection';
 import Login from './components/Auth/Login';
 import Register from './components/Auth/Register';
 import { AuthProvider } from './contexts/AuthContext';
@@ -15,6 +16,8 @@ function App() {
         return <Home onNavigate={setCurrentPage} />;
       case 'inflation-beat':
         return <InflationBeat />;
+      case 'projet-immo':
+        return <RealEstateProjection />;
       case 'login':
         return <Login onNavigate={setCurrentPage} />;
       case 'register':

@@ -1,5 +1,5 @@
 import React from 'react';
-import { TrendingUp, Calculator, Shield, Target } from 'lucide-react';
+import { TrendingUp, Calculator, Shield, Target, Home as HomeIcon } from 'lucide-react';
 
 interface HomeProps {
   onNavigate: (page: string) => void;
@@ -13,6 +13,13 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
       description: 'Comparez vos placements avec le Livret A et découvrez la meilleure stratégie pour préserver votre pouvoir d\'achat.',
       action: 'inflation-beat',
       buttonText: 'Calculer maintenant'
+    },
+    {
+      icon: HomeIcon,
+      title: 'Projet immobilier',
+      description: 'Simulez un investissement locatif et visualisez sa rentabilité.',
+      action: 'projet-immo',
+      buttonText: 'Lancer la simulation'
     },
     {
       icon: Shield,

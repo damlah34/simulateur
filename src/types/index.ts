@@ -26,3 +26,22 @@ export interface CalculationParams {
   inflationRate: number;
   monthlyContribution?: number;
 }
+
+export interface RealEstateProjectionInput {
+  price: number;
+  contribution: number;
+  duration: number;
+  rate: number;
+  rent: number;
+  charges: number;
+  tax: number;
+  insurance: number;
+  vacancyWeeks: number;
+}
+
+export interface RealEstateYearData {
+  year: number;
+  remainingPrincipal: number;
+  cumulativeCashflow: number;
+  totalProfit: number;
+}
