@@ -75,7 +75,8 @@ export const formatCurrency = (amount: number): string => {
 export const getLivretARate = (): number => LIVRET_A_RATE;
 
 // --- Real estate helpers ---
-export const calculateNotaryFees = (price: number): number => price * 0.07;
+export const calculateNotaryFees = (price: number): number =>
+  Math.round(price * 0.07);
 
 export const calculateMonthlyPayment = (
   loanAmount: number,
