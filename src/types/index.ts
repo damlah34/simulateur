@@ -43,6 +43,8 @@ export interface RealEstateProjectionInput {
   managementFees: number;
   rentGrowth: number;
   vacancyWeeks: number;
+  propertyGrowthRate: number;
+  sellYear: number;
 }
 
 export interface RealEstateYearData {
@@ -50,4 +52,6 @@ export interface RealEstateYearData {
   remainingPrincipal: number;
   cumulativeCashflow: number;
   enrichissement: number;
+  propertyValue: number;
+  plusValue: number;
 }
