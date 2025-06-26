@@ -36,6 +36,12 @@ export interface RealEstateProjectionInput {
   charges: number;
   tax: number;
   insurance: number;
+  works: number;
+  cfe: number;
+  pnoInsurance: number;
+  accountingFees: number;
+  managementFees: number;
+  rentGrowth: number;
   vacancyWeeks: number;
 }
 
@@ -43,5 +49,5 @@ export interface RealEstateYearData {
   year: number;
   remainingPrincipal: number;
   cumulativeCashflow: number;
-  totalProfit: number;
+  enrichissement: number;
 }
