@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Home as HomeIcon, BarChart } from 'lucide-react';
 import {
   LineChart,
@@ -27,9 +27,20 @@ const RealEstateProjection: React.FC = () => {
   const [charges, setCharges] = useState(100);
   const [tax, setTax] = useState(1000);
   const [insurance, setInsurance] = useState(20);
+  const [works, setWorks] = useState(0);
+  const [cfe, setCfe] = useState(0);
+  const [pnoInsurance, setPnoInsurance] = useState(0);
+  const [accountingFees, setAccountingFees] = useState(0);
+  const [managementFees, setManagementFees] = useState(0);
+  const [rentGrowth, setRentGrowth] = useState(0);
   const [vacancy, setVacancy] = useState(0);
+  const [notaryFees, setNotaryFees] = useState(calculateNotaryFees(price));
   const [projection, setProjection] = useState<RealEstateYearData[]>([]);
   const [showResults, setShowResults] = useState(false);
+
+  useEffect(() => {
+    setNotaryFees(calculateNotaryFees(price));
+  }, [price]);
 
   const handleCalculate = () => {
     const data = buildRealEstateProjection({
@@ -41,23 +52,44 @@ const RealEstateProjection: React.FC = () => {
       charges,
       tax,
       insurance,
+      works,
+      cfe,
+      pnoInsurance,
+      accountingFees,
+      managementFees,
+      rentGrowth,
       vacancyWeeks: vacancy,
     });
     setProjection(data);
     setShowResults(true);
   };
 
-  const notaryFees = calculateNotaryFees(price);
   const loanAmount = price - contribution;
   const monthlyPayment =
     loanAmount > 0 ? calculateMonthlyPayment(loanAmount, rate, duration) : 0;
 
   const monthlyCashflow =
-    rent * (1 - vacancy / 52) - charges - insurance - tax / 12 - monthlyPayment;
+    rent * (1 - vacancy / 52) -
+    charges -
+    managementFees -
+    insurance -
+    pnoInsurance / 12 -
+    tax / 12 -
+    cfe / 12 -
+    accountingFees / 12 -
+    monthlyPayment;
 
   const grossYield = (rent * 12 * 100) / price;
   const netAnnualIncome =
-    (rent * (1 - vacancy / 52) - charges - insurance) * 12 - tax;
+    (rent * (1 - vacancy / 52) -
+      charges -
+      managementFees -
+      insurance -
+      pnoInsurance / 12) *
+      12 -
+    tax -
+    cfe -
+    accountingFees;
   const netYield = (netAnnualIncome * 100) / price;
 
   const CustomTooltip = ({ active, payload, label }: any) => {
@@ -114,6 +146,20 @@ const RealEstateProjection: React.FC = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Frais de notaire
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    value={notaryFees}
+                    onChange={(e) => setNotaryFees(Number(e.target.value))}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                  />
+                  <span className="absolute right-3 top-2 text-gray-500">€</span>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Apport personnel
                 </label>
                 <div className="relative">
@@ -130,15 +176,15 @@ const RealEstateProjection: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Durée du prêt
                 </label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    value={duration}
-                    onChange={(e) => setDuration(Number(e.target.value))}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                  />
-                  <span className="absolute right-3 top-2 text-gray-500">ans</span>
-                </div>
+                <input
+                  type="range"
+                  min="5"
+                  max="30"
+                  value={duration}
+                  onChange={(e) => setDuration(Number(e.target.value))}
+                  className="w-full"
+                />
+                <p className="text-sm text-gray-500 mt-1">{duration} ans</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -168,6 +214,21 @@ const RealEstateProjection: React.FC = () => {
                   />
                   <span className="absolute right-3 top-2 text-gray-500">€</span>
                 </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Augmentation annuelle du loyer
+                </label>
+                <input
+                  type="range"
+                  min="0"
+                  max="3"
+                  step="0.1"
+                  value={rentGrowth}
+                  onChange={(e) => setRentGrowth(Number(e.target.value))}
+                  className="w-full"
+                />
+                <p className="text-sm text-gray-500 mt-1">{rentGrowth}%</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -206,6 +267,76 @@ const RealEstateProjection: React.FC = () => {
                     type="number"
                     value={insurance}
                     onChange={(e) => setInsurance(Number(e.target.value))}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                  />
+                  <span className="absolute right-3 top-2 text-gray-500">€</span>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Travaux (total)
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    value={works}
+                    onChange={(e) => setWorks(Number(e.target.value))}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                  />
+                  <span className="absolute right-3 top-2 text-gray-500">€</span>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  CFE annuelle
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    value={cfe}
+                    onChange={(e) => setCfe(Number(e.target.value))}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                  />
+                  <span className="absolute right-3 top-2 text-gray-500">€</span>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Assurance PNO annuelle
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    value={pnoInsurance}
+                    onChange={(e) => setPnoInsurance(Number(e.target.value))}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                  />
+                  <span className="absolute right-3 top-2 text-gray-500">€</span>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Expert comptable annuel
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    value={accountingFees}
+                    onChange={(e) => setAccountingFees(Number(e.target.value))}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                  />
+                  <span className="absolute right-3 top-2 text-gray-500">€</span>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Gestion locative mensuelle
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    value={managementFees}
+                    onChange={(e) => setManagementFees(Number(e.target.value))}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg"
                   />
                   <span className="absolute right-3 top-2 text-gray-500">€</span>
@@ -276,7 +407,7 @@ const RealEstateProjection: React.FC = () => {
                         <Legend />
                         <Line type="monotone" dataKey="remainingPrincipal" stroke="#3b82f6" name="Capital restant dû" strokeWidth={3} />
                         <Line type="monotone" dataKey="cumulativeCashflow" stroke="#10b981" name="Cashflow cumulé" strokeWidth={3} />
-                        <Line type="monotone" dataKey="totalProfit" stroke="#f59e0b" name="Profit total" strokeWidth={3} />
+                        <Line type="monotone" dataKey="enrichissement" stroke="#f59e0b" name="Enrichissement" strokeWidth={3} />
                       </LineChart>
                     </ResponsiveContainer>
                   </div>
@@ -289,9 +420,6 @@ const RealEstateProjection: React.FC = () => {
               </div>
             )}
           </div>
-        </div>
-        <div className="text-sm text-gray-500">
-          Frais de notaire estimés : {formatCurrency(notaryFees)}
         </div>
       </div>
     </div>

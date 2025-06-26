@@ -105,6 +105,12 @@ export const buildRealEstateProjection = (
     charges,
     tax,
     insurance,
+    works,
+    cfe,
+    pnoInsurance,
+    accountingFees,
+    managementFees,
+    rentGrowth,
     vacancyWeeks,
   } = input;
 
@@ -113,14 +119,25 @@ export const buildRealEstateProjection = (
   const months = duration * 12;
   const monthlyRate = rate / 12 / 100;
 
-  const monthlyNetRent =
-    rent * (1 - vacancyWeeks / 52) - charges - insurance - tax / 12;
   let remaining = loanAmount;
-  let cumulativeCashflow = 0;
+  let cumulativeCashflow = -works;
+  let currentRent = rent;
 
   const results: RealEstateYearData[] = [];
 
   for (let m = 1; m <= months; m++) {
+    if (m > 1 && (m - 1) % 12 === 0) {
+      currentRent *= 1 + rentGrowth / 100;
+    }
+    const monthlyNetRent =
+      currentRent * (1 - vacancyWeeks / 52) -
+      charges -
+      managementFees -
+      insurance -
+      pnoInsurance / 12 -
+      tax / 12 -
+      cfe / 12 -
+      accountingFees / 12;
     const interest = remaining * monthlyRate;
     const principal = monthlyPayment - interest;
     remaining -= principal;
@@ -129,12 +146,12 @@ export const buildRealEstateProjection = (
     if (m % 12 === 0) {
       const year = m / 12;
       const capitalRepaid = loanAmount - remaining;
-      const totalProfit = capitalRepaid + cumulativeCashflow;
+      const enrichissement = capitalRepaid + cumulativeCashflow;
       results.push({
         year,
         remainingPrincipal: Math.max(0, Math.round(remaining)),
         cumulativeCashflow: Math.round(cumulativeCashflow),
-        totalProfit: Math.round(totalProfit),
+        enrichissement: Math.round(enrichissement),
       });
     }
   }
