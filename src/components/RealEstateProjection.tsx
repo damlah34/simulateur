@@ -451,7 +451,7 @@ const RealEstateProjection: React.FC = () => {
                         <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k€`} />
                         <Tooltip content={<CustomTooltip />} />
                         <Legend />
-                        <Line type="monotone" dataKey="remainingPrincipal" stroke="#3b82f6" name="Capital restant dû" strokeWidth={3} />
+                        <Line type="monotone" dataKey="repaidPrincipal" stroke="#3b82f6" name="Capital remboursé" strokeWidth={3} />
                         <Line type="monotone" dataKey="cumulativeCashflow" stroke="#10b981" name="Cashflow cumulé" strokeWidth={3} />
                         <Line type="monotone" dataKey="enrichissement" stroke="#f59e0b" name="Enrichissement" strokeWidth={3} />
                       </LineChart>
