@@ -36,7 +36,9 @@ const RealEstateProjection: React.FC = () => {
   const [vacancy, setVacancy] = useState(0);
   const [propertyGrowthRate, setPropertyGrowthRate] = useState(0);
   const [sellYear, setSellYear] = useState(duration);
-  const [notaryFees, setNotaryFees] = useState(calculateNotaryFees(price));
+  const [notaryFees, setNotaryFees] = useState(
+    Math.round(calculateNotaryFees(price))
+  );
   const [projection, setProjection] = useState<RealEstateYearData[]>([]);
   const [showResults, setShowResults] = useState(false);
 
@@ -180,6 +182,7 @@ const RealEstateProjection: React.FC = () => {
                     value={notaryFees}
                     onChange={(e) => setNotaryFees(Number(e.target.value))}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                    step={1}
                   />
                   <span className="absolute right-3 top-2 text-gray-500">€</span>
                 </div>
