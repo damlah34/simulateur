@@ -16,6 +16,7 @@ import {
   buildRealEstateProjection,
   formatCurrency,
 } from '../utils/calculations';
+import { fetchCityPrice } from '../utils/fetchCityPrice';
 import { RealEstateYearData } from '../types';
 
 const RealEstateProjection: React.FC = () => {
@@ -39,6 +40,10 @@ const RealEstateProjection: React.FC = () => {
   const [notaryFees, setNotaryFees] = useState(calculateNotaryFees(price));
   const [projection, setProjection] = useState<RealEstateYearData[]>([]);
   const [showResults, setShowResults] = useState(false);
+  const [city, setCity] = useState('');
+  const [surface, setSurface] = useState(0);
+  const [averageCityPrice, setAverageCityPrice] = useState<number | null>(null);
+  const [cityError, setCityError] = useState<string | null>(null);
 
   useEffect(() => {
     setNotaryFees(calculateNotaryFees(price));
@@ -72,6 +77,18 @@ const RealEstateProjection: React.FC = () => {
     });
     setProjection(data);
     setShowResults(true);
+  };
+
+  const handleCityBlur = async () => {
+    if (!city) return;
+    try {
+      setCityError(null);
+      setAverageCityPrice(null);
+      const pricePerSqm = await fetchCityPrice(city);
+      setAverageCityPrice(pricePerSqm);
+    } catch {
+      setCityError('Erreur lors de la récupération du prix de la ville.');
+    }
   };
 
   const loanAmount = price - contribution;
@@ -142,6 +159,42 @@ const RealEstateProjection: React.FC = () => {
               Paramètres
             </h2>
             <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Ville
+                </label>
+                <input
+                  type="text"
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  onBlur={handleCityBlur}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                />
+                {averageCityPrice !== null && (
+                  <p className="text-sm text-gray-500 mt-1">
+                    Prix moyen : {formatCurrency(averageCityPrice)} /m²
+                  </p>
+                )}
+                {cityError && (
+                  <p className="text-sm text-red-600 mt-1">{cityError}</p>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Surface (m²)
+                </label>
+                <input
+                  type="number"
+                  value={surface}
+                  onChange={(e) => setSurface(Number(e.target.value))}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                />
+                {averageCityPrice !== null && surface > 0 && (
+                  <p className="text-sm text-gray-500 mt-1">
+                    Prix suggéré : {formatCurrency(averageCityPrice * surface)}
+                  </p>
+                )}
+              </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Prix du bien
