@@ -50,6 +50,7 @@ export interface RealEstateProjectionInput {
 export interface RealEstateYearData {
   year: number;
   remainingPrincipal: number;
+  repaidPrincipal: number;
   cumulativeCashflow: number;
   enrichissement: number;
   propertyValue: number;

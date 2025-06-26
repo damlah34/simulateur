@@ -162,6 +162,7 @@ export const buildRealEstateProjection = (
       results.push({
         year,
         remainingPrincipal: Math.max(0, Math.round(remaining)),
+        repaidPrincipal: Math.round(capitalRepaid),
         cumulativeCashflow: Math.round(cumulativeCashflow),
         enrichissement: Math.round(enrichissement),
         propertyValue: Math.round(propertyValue),
