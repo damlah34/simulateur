@@ -1,4 +1,9 @@
-import { InvestmentComparison, CalculationParams } from '../types';
+import {
+  InvestmentComparison,
+  CalculationParams,
+  RealEstateProjectionInput,
+  RealEstateYearData,
+} from '../types';
 
 const LIVRET_A_RATE = 0.03; // 3% taux Livret A
 
@@ -68,3 +73,72 @@ export const formatCurrency = (amount: number): string => {
 };
 
 export const getLivretARate = (): number => LIVRET_A_RATE;
+
+// --- Real estate helpers ---
+export const calculateNotaryFees = (price: number): number => price * 0.07;
+
+export const calculateMonthlyPayment = (
+  loanAmount: number,
+  annualRate: number,
+  durationYears: number
+): number => {
+  const monthlyRate = annualRate / 12 / 100;
+  const months = durationYears * 12;
+  if (monthlyRate === 0) {
+    return loanAmount / months;
+  }
+  return (
+    loanAmount * monthlyRate / (1 - Math.pow(1 + monthlyRate, -months))
+  );
+};
+
+
+export const buildRealEstateProjection = (
+  input: RealEstateProjectionInput
+): RealEstateYearData[] => {
+  const {
+    price,
+    contribution,
+    duration,
+    rate,
+    rent,
+    charges,
+    tax,
+    insurance,
+    vacancyWeeks,
+  } = input;
+
+  const loanAmount = price - contribution;
+  const monthlyPayment = calculateMonthlyPayment(loanAmount, rate, duration);
+  const months = duration * 12;
+  const monthlyRate = rate / 12 / 100;
+
+  const monthlyNetRent =
+    rent * (1 - vacancyWeeks / 52) - charges - insurance - tax / 12;
+  let remaining = loanAmount;
+  let cumulativeCashflow = 0;
+
+  const results: RealEstateYearData[] = [];
+
+  for (let m = 1; m <= months; m++) {
+    const interest = remaining * monthlyRate;
+    const principal = monthlyPayment - interest;
+    remaining -= principal;
+    cumulativeCashflow += monthlyNetRent - monthlyPayment;
+
+    if (m % 12 === 0) {
+      const year = m / 12;
+      const capitalRepaid = loanAmount - remaining;
+      const totalProfit = capitalRepaid + cumulativeCashflow;
+      results.push({
+        year,
+        remainingPrincipal: Math.max(0, Math.round(remaining)),
+        cumulativeCashflow: Math.round(cumulativeCashflow),
+        totalProfit: Math.round(totalProfit),
+      });
+    }
+  }
+
+  return results;
+};
+
