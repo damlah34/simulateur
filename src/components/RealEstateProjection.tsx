@@ -407,43 +407,35 @@ const RealEstateProjection: React.FC = () => {
           </div>
 
           <div className="space-y-6">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-white p-6 rounded-xl shadow-lg">
+                <h3 className="text-sm font-medium text-gray-500 mb-2">Mensualité</h3>
+                <p className="text-2xl font-bold text-primary-600">
+                  {formatCurrency(monthlyPayment)}
+                </p>
+              </div>
+              <div className="bg-white p-6 rounded-xl shadow-lg">
+                <h3 className="text-sm font-medium text-gray-500 mb-2">Cashflow mensuel</h3>
+                <p className="text-2xl font-bold text-emerald-600">
+                  {formatCurrency(monthlyCashflow)}
+                </p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-white p-6 rounded-xl shadow-lg text-center">
+                <p className="text-sm text-gray-500">Rendement brut</p>
+                <p className="text-xl font-semibold">{grossYield.toFixed(2)}%</p>
+              </div>
+              <div className="bg-white p-6 rounded-xl shadow-lg text-center">
+                <p className="text-sm text-gray-500">Rendement net</p>
+                <p className="text-xl font-semibold">{netYield.toFixed(2)}%</p>
+              </div>
+            </div>
             {showResults ? (
               <>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-white p-6 rounded-xl shadow-lg">
-                    <h3 className="text-sm font-medium text-gray-500 mb-2">
-                      Mensualité
-                    </h3>
-                    <p className="text-2xl font-bold text-primary-600">
-                      {formatCurrency(monthlyPayment)}
-                    </p>
-                  </div>
-                  <div className="bg-white p-6 rounded-xl shadow-lg">
-                    <h3 className="text-sm font-medium text-gray-500 mb-2">
-                      Cashflow mensuel
-                    </h3>
-                    <p className="text-2xl font-bold text-emerald-600">
-                      {formatCurrency(monthlyCashflow)}
-                    </p>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-white p-6 rounded-xl shadow-lg text-center">
-                    <p className="text-sm text-gray-500">Rendement brut</p>
-                    <p className="text-xl font-semibold">{grossYield.toFixed(2)}%</p>
-                  </div>
-                  <div className="bg-white p-6 rounded-xl shadow-lg text-center">
-                    <p className="text-sm text-gray-500">Rendement net</p>
-                    <p className="text-xl font-semibold">{netYield.toFixed(2)}%</p>
-                  </div>
-                </div>
                 <div className="bg-white p-6 rounded-xl shadow-lg text-center">
-                  <p className="text-sm text-gray-500">
-                    Plus-value potentielle à l’année {sellYear}
-                  </p>
-                  <p className="text-xl font-semibold">
-                    {formatCurrency(potentialSaleGain)}
-                  </p>
+                  <p className="text-sm text-gray-500">Plus-value potentielle à l’année {sellYear}</p>
+                  <p className="text-xl font-semibold">{formatCurrency(potentialSaleGain)}</p>
                 </div>
                 <div className="bg-white p-6 rounded-xl shadow-lg">
                   <div className="h-96">
