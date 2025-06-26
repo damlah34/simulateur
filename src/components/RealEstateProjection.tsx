@@ -158,6 +158,20 @@ const RealEstateProjection: React.FC = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Travaux (total)
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    value={works}
+                    onChange={(e) => setWorks(Number(e.target.value))}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                  />
+                  <span className="absolute right-3 top-2 text-gray-500">€</span>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Frais de notaire
                 </label>
                 <div className="relative">
@@ -294,20 +308,6 @@ const RealEstateProjection: React.FC = () => {
                     type="number"
                     value={insurance}
                     onChange={(e) => setInsurance(Number(e.target.value))}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                  />
-                  <span className="absolute right-3 top-2 text-gray-500">€</span>
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Travaux (total)
-                </label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    value={works}
-                    onChange={(e) => setWorks(Number(e.target.value))}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg"
                   />
                   <span className="absolute right-3 top-2 text-gray-500">€</span>
