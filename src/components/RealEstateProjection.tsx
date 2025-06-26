@@ -143,7 +143,29 @@ const RealEstateProjection: React.FC = () => {
               <BarChart className="h-6 w-6 mr-2 text-primary-600" />
               Paramètres
             </h2>
-            <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-white p-6 rounded-xl shadow-lg">
+                <h3 className="text-sm font-medium text-gray-500 mb-2">Mensualité</h3>
+                <p className="text-2xl font-bold text-primary-600">
+                  {formatCurrency(monthlyPayment)}
+                </p>
+              </div>
+              <div className="bg-white p-6 rounded-xl shadow-lg">
+                <h3 className="text-sm font-medium text-gray-500 mb-2">Cashflow mensuel</h3>
+                <p className="text-2xl font-bold text-emerald-600">
+                  {formatCurrency(monthlyCashflow)}
+                </p>
+              </div>
+              <div className="bg-white p-6 rounded-xl shadow-lg text-center">
+                <p className="text-sm text-gray-500">Rendement brut</p>
+                <p className="text-xl font-semibold">{grossYield.toFixed(2)}%</p>
+              </div>
+              <div className="bg-white p-6 rounded-xl shadow-lg text-center">
+                <p className="text-sm text-gray-500">Rendement net</p>
+                <p className="text-xl font-semibold">{netYield.toFixed(2)}%</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Prix du bien
@@ -400,46 +422,18 @@ const RealEstateProjection: React.FC = () => {
                 />
                 <p className="text-sm text-gray-500 mt-1">{sellYear} ans</p>
               </div>
-              <button
-                onClick={handleCalculate}
-                className="w-full bg-primary-600 text-white py-3 rounded-lg hover:bg-primary-700"
-              >
-                Calculer
-              </button>
             </div>
+            <button
+              onClick={handleCalculate}
+              className="w-full bg-primary-600 text-white py-3 rounded-lg hover:bg-primary-700"
+            >
+              Calculer
+            </button>
           </div>
 
           <div className="space-y-6">
             {showResults ? (
               <>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-white p-6 rounded-xl shadow-lg">
-                    <h3 className="text-sm font-medium text-gray-500 mb-2">
-                      Mensualité
-                    </h3>
-                    <p className="text-2xl font-bold text-primary-600">
-                      {formatCurrency(monthlyPayment)}
-                    </p>
-                  </div>
-                  <div className="bg-white p-6 rounded-xl shadow-lg">
-                    <h3 className="text-sm font-medium text-gray-500 mb-2">
-                      Cashflow mensuel
-                    </h3>
-                    <p className="text-2xl font-bold text-emerald-600">
-                      {formatCurrency(monthlyCashflow)}
-                    </p>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-white p-6 rounded-xl shadow-lg text-center">
-                    <p className="text-sm text-gray-500">Rendement brut</p>
-                    <p className="text-xl font-semibold">{grossYield.toFixed(2)}%</p>
-                  </div>
-                  <div className="bg-white p-6 rounded-xl shadow-lg text-center">
-                    <p className="text-sm text-gray-500">Rendement net</p>
-                    <p className="text-xl font-semibold">{netYield.toFixed(2)}%</p>
-                  </div>
-                </div>
                 <div className="bg-white p-6 rounded-xl shadow-lg text-center">
                   <p className="text-sm text-gray-500">
                     Plus-value potentielle à l’année {sellYear}
