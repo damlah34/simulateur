@@ -8,11 +8,11 @@ import {
 const LIVRET_A_RATE = 0.03; // 3% taux Livret A
 
 export const calculateInvestmentComparison = (params: CalculationParams): InvestmentComparison[] => {
-  const { initialAmount, customRate, duration, inflationRate, monthlyContribution = 0 } = params;
+  const { initialAmount, customRate, duration, inflationRate, monthlyContribution = 0, livretARate = LIVRET_A_RATE * 100 } = params;
   const results: InvestmentComparison[] = [];
 
   // Taux mensuels
-  const livretAMonthlyRate = LIVRET_A_RATE / 12;
+  const livretAMonthlyRate = (livretARate / 100) / 12;
   const customMonthlyRate = (customRate / 100) / 12;
   const inflationMonthlyRate = (inflationRate / 100) / 12;
 

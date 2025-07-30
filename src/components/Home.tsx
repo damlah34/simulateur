@@ -49,24 +49,6 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
             <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
               Focus <span className="text-primary-600">Patrimoine</span>
             </h1>
-            <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-              Prenez le contrôle de votre patrimoine financier. Comparez vos placements, 
-              battez l'inflation et construisez votre avenir financier en toute sérénité.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button
-                onClick={() => onNavigate('inflation-beat')}
-                className="bg-primary-600 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-primary-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
-              >
-                Commencer l'analyse
-              </button>
-              <button
-                onClick={() => onNavigate('register')}
-                className="border-2 border-primary-600 text-primary-600 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-primary-50 transition-colors"
-              >
-                Créer un compte
-              </button>
-            </div>
           </div>
         </div>
       </section>

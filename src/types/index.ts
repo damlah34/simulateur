@@ -25,6 +25,7 @@ export interface CalculationParams {
   duration: number;
   inflationRate: number;
   monthlyContribution?: number;
+  livretARate?: number;
 }
 
 export interface RealEstateProjectionInput {
