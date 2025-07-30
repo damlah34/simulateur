@@ -37,6 +37,7 @@ const RealEstateProjection: React.FC = () => {
   const [vacancy, setVacancy] = useState(0);
   const [propertyGrowthRate, setPropertyGrowthRate] = useState(0);
   const [sellYear, setSellYear] = useState(duration);
+  const [agencyFees, setAgencyFees] = useState(0);
   const [notaryFees, setNotaryFees] = useState(
     Math.round(calculateNotaryFees(price))
   );
@@ -122,6 +123,8 @@ const RealEstateProjection: React.FC = () => {
   const netYield = (netAnnualIncome * 100) / price;
   const potentialSaleGain =
     projection.length > 0 ? projection[projection.length - 1].plusValue : 0;
+  const globalBudget = price + works + notaryFees;
+  const financingNeed = price + notaryFees + works + agencyFees - contribution;
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -161,6 +164,18 @@ const RealEstateProjection: React.FC = () => {
               Paramètres
             </h2>
             <div className="grid grid-cols-2 gap-4">
+              <div className="bg-white p-6 rounded-xl shadow-lg">
+                <h3 className="text-sm font-medium text-gray-500 mb-2">Budget global</h3>
+                <p className="text-2xl font-bold text-primary-600">
+                  {formatCurrency(globalBudget)}
+                </p>
+              </div>
+              <div className="bg-white p-6 rounded-xl shadow-lg">
+                <h3 className="text-sm font-medium text-gray-500 mb-2">Besoin en financement</h3>
+                <p className="text-2xl font-bold text-primary-600">
+                  {formatCurrency(financingNeed)}
+                </p>
+              </div>
               <div className="bg-white p-6 rounded-xl shadow-lg">
                 <h3 className="text-sm font-medium text-gray-500 mb-2">Mensualité</h3>
                 <p className="text-2xl font-bold text-primary-600">
@@ -221,13 +236,27 @@ const RealEstateProjection: React.FC = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Prix du bien
+                  Prix du bien (hors FAI)
                 </label>
                 <div className="relative">
                   <input
                     type="number"
                     value={price}
                     onChange={(e) => setPrice(Number(e.target.value))}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                  />
+                  <span className="absolute right-3 top-2 text-gray-500">€</span>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Frais d'agence
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    value={agencyFees}
+                    onChange={(e) => setAgencyFees(Number(e.target.value))}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg"
                   />
                   <span className="absolute right-3 top-2 text-gray-500">€</span>
@@ -486,6 +515,18 @@ const RealEstateProjection: React.FC = () => {
 
           <div className="space-y-6">
             <div className="grid grid-cols-2 gap-4">
+              <div className="bg-white p-6 rounded-xl shadow-lg">
+                <h3 className="text-sm font-medium text-gray-500 mb-2">Budget global</h3>
+                <p className="text-2xl font-bold text-primary-600">
+                  {formatCurrency(globalBudget)}
+                </p>
+              </div>
+              <div className="bg-white p-6 rounded-xl shadow-lg">
+                <h3 className="text-sm font-medium text-gray-500 mb-2">Besoin en financement</h3>
+                <p className="text-2xl font-bold text-primary-600">
+                  {formatCurrency(financingNeed)}
+                </p>
+              </div>
               <div className="bg-white p-6 rounded-xl shadow-lg">
                 <h3 className="text-sm font-medium text-gray-500 mb-2">Mensualité</h3>
                 <p className="text-2xl font-bold text-primary-600">
