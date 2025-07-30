@@ -56,7 +56,7 @@ const Header: React.FC<HeaderProps> = ({ currentPage, onNavigate }) => {
                   : 'text-gray-500 hover:text-gray-700'
               }`}
             >
-              Projet Immo
+              Projet Immobilier
             </button>
           </nav>
 
@@ -87,7 +87,7 @@ const Header: React.FC<HeaderProps> = ({ currentPage, onNavigate }) => {
                 </button>
                 <button
                   onClick={() => onNavigate('register')}
-                  className="bg-primary-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors"
+                  className="bg-accent-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-accent-700 transition-colors"
                 >
                   S'inscrire
                 </button>

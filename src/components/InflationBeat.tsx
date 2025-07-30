@@ -5,15 +5,16 @@ import { calculateInvestmentComparison, formatCurrency, getLivretARate } from '.
 import { InvestmentComparison } from '../types';
 
 const InflationBeat: React.FC = () => {
-  const [initialAmount, setInitialAmount] = useState<number>(10000);
+  const [initialAmount, setInitialAmount] = useState<number>(0);
   const [customRate, setCustomRate] = useState<number>(5);
+  const [livretARate, setLivretARate] = useState<number>(getLivretARate() * 100);
   const [duration, setDuration] = useState<number>(10);
   const [monthlyContribution, setMonthlyContribution] = useState<number>(0);
   const [comparisonData, setComparisonData] = useState<InvestmentComparison[]>([]);
-  const [showResults, setShowResults] = useState<boolean>(false);
 
   const inflationRate = 2; // 2% d'inflation moyenne
-  const livretARate = getLivretARate() * 100; // Convert to percentage
+
+  const showResults = initialAmount > 0 || monthlyContribution > 0;
 
   useEffect(() => {
     if (showResults) {
@@ -23,14 +24,13 @@ const InflationBeat: React.FC = () => {
         duration,
         inflationRate,
         monthlyContribution,
+        livretARate,
       });
       setComparisonData(data);
+    } else {
+      setComparisonData([]);
     }
-  }, [initialAmount, customRate, duration, monthlyContribution, showResults]);
-
-  const handleCalculate = () => {
-    setShowResults(true);
-  };
+  }, [initialAmount, customRate, duration, monthlyContribution, livretARate]);
 
   const finalCustomValue = comparisonData.length > 0 ? comparisonData[comparisonData.length - 1].custom : 0;
   const finalLivretAValue = comparisonData.length > 0 ? comparisonData[comparisonData.length - 1].livretA : 0;
@@ -127,6 +127,24 @@ const InflationBeat: React.FC = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Taux du Livret A
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    value={livretARate}
+                    onChange={(e) => setLivretARate(Number(e.target.value))}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
+                    min="0"
+                    max="5"
+                    step="0.1"
+                  />
+                  <span className="absolute right-3 top-3 text-gray-500">%</span>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Durée de placement
                 </label>
                 <div className="relative">
@@ -159,17 +177,11 @@ const InflationBeat: React.FC = () => {
               <div className="bg-gray-50 p-4 rounded-lg">
                 <h3 className="font-medium text-gray-900 mb-2">Références utilisées :</h3>
                 <ul className="space-y-1 text-sm text-gray-600">
-                  <li>• Livret A : {livretARate}% (taux actuel)</li>
+                  <li>• Livret A : {livretARate}% (taux saisi)</li>
                   <li>• Inflation moyenne : {inflationRate}%</li>
                 </ul>
               </div>
 
-              <button
-                onClick={handleCalculate}
-                className="w-full bg-primary-600 text-white py-4 px-6 rounded-lg font-semibold hover:bg-primary-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
-              >
-                Calculer et comparer
-              </button>
             </div>
           </div>
 
@@ -262,7 +274,7 @@ const InflationBeat: React.FC = () => {
                   Prêt pour la simulation ?
                 </h3>
                 <p className="text-gray-400">
-                  Remplissez le formulaire et cliquez sur "Calculer" pour voir les résultats
+                  Remplissez le formulaire pour voir les résultats en temps réel
                 </p>
               </div>
             )}

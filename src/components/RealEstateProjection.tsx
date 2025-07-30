@@ -148,6 +148,15 @@ const RealEstateProjection: React.FC = () => {
     projection.length > 0 ? projection[projection.length - 1].plusValue : 0;
   const globalBudget = price + works + notaryFees + agencyFees;
 
+  const netYieldColor =
+    netYield >= 7 ? 'text-emerald-600' : netYield >= 5.5 ? 'text-orange-600' : 'text-red-600';
+  const decision =
+    netYield >= 7
+      ? 'Favorable'
+      : netYield >= 5.5
+      ? 'A Approfondir'
+      : 'NOGO (sauf exception patrimoniale)';
+
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
@@ -172,7 +181,7 @@ const RealEstateProjection: React.FC = () => {
             <HomeIcon className="h-12 w-12 text-primary-600" />
           </div>
           <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            Projet immobilier
+            Projet Immobilier
           </h1>
           <p className="text-lg text-gray-600">
             Simulez un investissement locatif et visualisez sa rentabilité.
@@ -204,7 +213,11 @@ const RealEstateProjection: React.FC = () => {
               </div>
               <div className="bg-white p-6 rounded-xl shadow-lg text-center">
                 <p className="text-sm text-gray-500">Rendement net</p>
-                <p className="text-xl font-semibold">{netYield.toFixed(2)}%</p>
+                <p className={`text-xl font-semibold ${netYieldColor}`}>{netYield.toFixed(2)}%</p>
+              </div>
+              <div className="bg-white p-6 rounded-xl shadow-lg text-center">
+                <p className="text-sm text-gray-500">Décision</p>
+                <p className={`text-xl font-semibold ${netYieldColor}`}>{decision}</p>
               </div>
             </div>
             <div className="grid grid-cols-3 gap-4">
@@ -517,7 +530,7 @@ const RealEstateProjection: React.FC = () => {
             </div>
             <button
               onClick={handleCalculate}
-              className="w-full bg-primary-600 text-white py-3 rounded-lg hover:bg-primary-700"
+              className="w-full bg-accent-600 text-white py-3 rounded-lg hover:bg-accent-700"
             >
               Calculer
             </button>
@@ -557,7 +570,11 @@ const RealEstateProjection: React.FC = () => {
               </div>
               <div className="bg-white p-6 rounded-xl shadow-lg text-center">
                 <p className="text-sm text-gray-500">Rendement net</p>
-                <p className="text-xl font-semibold">{netYield.toFixed(2)}%</p>
+                <p className={`text-xl font-semibold ${netYieldColor}`}>{netYield.toFixed(2)}%</p>
+              </div>
+              <div className="bg-white p-6 rounded-xl shadow-lg text-center col-span-2">
+                <p className="text-sm text-gray-500">Décision</p>
+                <p className={`text-xl font-semibold ${netYieldColor}`}>{decision}</p>
               </div>
             </div>
             {showResults ? (
