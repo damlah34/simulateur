@@ -45,6 +45,8 @@ export interface RealEstateProjectionInput {
   vacancyWeeks: number;
   propertyGrowthRate: number;
   sellYear: number;
+  agencyFees: number;
+  notaryFees: number;
 }
 
 export interface RealEstateYearData {

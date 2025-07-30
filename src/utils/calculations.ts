@@ -76,7 +76,7 @@ export const getLivretARate = (): number => LIVRET_A_RATE;
 
 // --- Real estate helpers ---
 export const calculateNotaryFees = (price: number): number =>
-  Math.round(price * 0.07);
+  Math.round(price * 0.08);
 
 export const calculateMonthlyPayment = (
   loanAmount: number,
@@ -115,9 +115,11 @@ export const buildRealEstateProjection = (
     vacancyWeeks,
     propertyGrowthRate,
     sellYear,
+    agencyFees,
+    notaryFees,
   } = input;
 
-  const loanAmount = price - contribution;
+  const loanAmount = price + agencyFees + works + notaryFees - contribution;
   const monthlyPayment = calculateMonthlyPayment(loanAmount, rate, duration);
   const months = sellYear * 12;
   const totalLoanMonths = duration * 12;
