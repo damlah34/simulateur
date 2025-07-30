@@ -131,7 +131,7 @@ const RealEstateProjection: React.FC = () => {
     accountingFees / 12 -
     monthlyPayment;
 
-  const grossYield = (rent * 12 * 100) / price;
+  const grossYield = (rent * 12 * 100) / (price + works);
   const netAnnualIncome =
     (rent * (1 - vacancy / 52) -
       charges -
