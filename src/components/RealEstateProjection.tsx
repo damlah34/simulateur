@@ -53,10 +53,29 @@ const RealEstateProjection: React.FC = () => {
   }, [price]);
 
   useEffect(() => {
-    if (sellYear > duration) {
-      setSellYear(duration);
-    }
-  }, [duration, sellYear]);
+    setShowResults(false);
+    setProjection([]);
+  }, [
+    price,
+    contribution,
+    duration,
+    rate,
+    rent,
+    charges,
+    tax,
+    insurance,
+    works,
+    cfe,
+    pnoInsurance,
+    accountingFees,
+    managementFees,
+    rentGrowth,
+    vacancy,
+    propertyGrowthRate,
+    sellYear,
+    agencyFees,
+    notaryFees,
+  ]);
 
   const handleCalculate = () => {
     const data = buildRealEstateProjection({
@@ -77,6 +96,8 @@ const RealEstateProjection: React.FC = () => {
       vacancyWeeks: vacancy,
       propertyGrowthRate,
       sellYear,
+      agencyFees,
+      notaryFees,
     });
     setProjection(data);
     setShowResults(true);
@@ -94,7 +115,8 @@ const RealEstateProjection: React.FC = () => {
     }
   };
 
-  const loanAmount = price - contribution;
+  const financingNeed = price + notaryFees + works + agencyFees - contribution;
+  const loanAmount = financingNeed;
   const monthlyPayment =
     loanAmount > 0 ? calculateMonthlyPayment(loanAmount, rate, duration) : 0;
 
@@ -120,11 +142,11 @@ const RealEstateProjection: React.FC = () => {
     tax -
     cfe -
     accountingFees;
-  const netYield = (netAnnualIncome * 100) / price;
+  const netYield =
+    (netAnnualIncome * 100) / (price + notaryFees + works + agencyFees);
   const potentialSaleGain =
     projection.length > 0 ? projection[projection.length - 1].plusValue : 0;
-  const globalBudget = price + works + notaryFees;
-  const financingNeed = price + notaryFees + works + agencyFees - contribution;
+  const globalBudget = price + works + notaryFees + agencyFees;
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -164,18 +186,6 @@ const RealEstateProjection: React.FC = () => {
               Paramètres
             </h2>
             <div className="grid grid-cols-2 gap-4">
-              <div className="bg-white p-6 rounded-xl shadow-lg">
-                <h3 className="text-sm font-medium text-gray-500 mb-2">Budget global</h3>
-                <p className="text-2xl font-bold text-primary-600">
-                  {formatCurrency(globalBudget)}
-                </p>
-              </div>
-              <div className="bg-white p-6 rounded-xl shadow-lg">
-                <h3 className="text-sm font-medium text-gray-500 mb-2">Besoin en financement</h3>
-                <p className="text-2xl font-bold text-primary-600">
-                  {formatCurrency(financingNeed)}
-                </p>
-              </div>
               <div className="bg-white p-6 rounded-xl shadow-lg">
                 <h3 className="text-sm font-medium text-gray-500 mb-2">Mensualité</h3>
                 <p className="text-2xl font-bold text-primary-600">
@@ -497,7 +507,7 @@ const RealEstateProjection: React.FC = () => {
                 <input
                   type="range"
                   min="1"
-                  max={duration}
+                  max={30}
                   value={sellYear}
                   onChange={(e) => setSellYear(Number(e.target.value))}
                   className="w-full"
