@@ -263,7 +263,11 @@ const InflationBeat: React.FC = () => {
                 </div>
 
                 {/* Chart */}
-                <ComparisonChart data={comparisonData} customRate={customRate} />
+                <ComparisonChart
+                  data={comparisonData}
+                  customRate={customRate}
+                  livretARate={livretARate}
+                />
               </>
             )}
 

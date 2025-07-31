@@ -194,32 +194,6 @@ const RealEstateProjection: React.FC = () => {
               <BarChart className="h-6 w-6 mr-2 text-primary-600" />
               Paramètres
             </h2>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-white p-6 rounded-xl shadow-lg">
-                <h3 className="text-sm font-medium text-gray-500 mb-2">Mensualité</h3>
-                <p className="text-2xl font-bold text-primary-600">
-                  {formatCurrency(monthlyPayment)}
-                </p>
-              </div>
-              <div className="bg-white p-6 rounded-xl shadow-lg">
-                <h3 className="text-sm font-medium text-gray-500 mb-2">Cashflow mensuel</h3>
-                <p className="text-2xl font-bold text-emerald-600">
-                  {formatCurrency(monthlyCashflow)}
-                </p>
-              </div>
-              <div className="bg-white p-6 rounded-xl shadow-lg text-center">
-                <p className="text-sm text-gray-500">Rendement brut</p>
-                <p className="text-xl font-semibold">{grossYield.toFixed(2)}%</p>
-              </div>
-              <div className="bg-white p-6 rounded-xl shadow-lg text-center">
-                <p className="text-sm text-gray-500">Rendement net</p>
-                <p className={`text-xl font-semibold ${netYieldColor}`}>{netYield.toFixed(2)}%</p>
-              </div>
-              <div className="bg-white p-6 rounded-xl shadow-lg text-center">
-                <p className="text-sm text-gray-500">Décision</p>
-                <p className={`text-xl font-semibold ${netYieldColor}`}>{decision}</p>
-              </div>
-            </div>
             <div className="grid grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -537,6 +511,10 @@ const RealEstateProjection: React.FC = () => {
           </div>
 
           <div className="space-y-6">
+            <h2 className="text-2xl font-semibold text-gray-900 flex items-center">
+              <BarChart className="h-6 w-6 mr-2 text-primary-600" />
+              Projection
+            </h2>
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-white p-6 rounded-xl shadow-lg">
                 <h3 className="text-sm font-medium text-gray-500 mb-2">Budget global</h3>
@@ -599,6 +577,12 @@ const RealEstateProjection: React.FC = () => {
                     </ResponsiveContainer>
                   </div>
                 </div>
+                <button
+                  onClick={() => window.print()}
+                  className="w-full bg-primary-600 text-white py-3 rounded-lg hover:bg-primary-700"
+                >
+                  Enregistrer en PDF
+                </button>
               </>
             ) : (
               <div className="bg-white p-12 rounded-xl shadow-lg text-center">

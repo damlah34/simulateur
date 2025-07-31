@@ -6,9 +6,14 @@ import { formatCurrency } from '../utils/calculations';
 interface ComparisonChartProps {
   data: InvestmentComparison[];
   customRate: number;
+  livretARate: number;
 }
 
-const ComparisonChart: React.FC<ComparisonChartProps> = ({ data, customRate }) => {
+const ComparisonChart: React.FC<ComparisonChartProps> = ({
+  data,
+  customRate,
+  livretARate,
+}) => {
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
@@ -54,7 +59,7 @@ const ComparisonChart: React.FC<ComparisonChartProps> = ({ data, customRate }) =
               dataKey="livretA"
               stroke="#f59e0b"
               strokeWidth={3}
-              name="Livret A (3%)"
+              name={`Livret A (${livretARate}%)`}
               dot={{ fill: '#f59e0b', strokeWidth: 2, r: 4 }}
               activeDot={{ r: 6, stroke: '#f59e0b', strokeWidth: 2 }}
             />
@@ -84,7 +89,7 @@ const ComparisonChart: React.FC<ComparisonChartProps> = ({ data, customRate }) =
         <div className="text-center p-4 bg-amber-50 rounded-lg">
           <div className="w-4 h-4 bg-amber-500 mx-auto mb-2 rounded"></div>
           <p className="text-sm font-medium text-amber-800">Livret A</p>
-          <p className="text-xs text-amber-600">Taux garanti 3%</p>
+          <p className="text-xs text-amber-600">Taux garanti {livretARate}%</p>
         </div>
         <div className="text-center p-4 bg-emerald-50 rounded-lg">
           <div className="w-4 h-4 bg-emerald-500 mx-auto mb-2 rounded"></div>
