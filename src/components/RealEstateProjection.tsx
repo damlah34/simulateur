@@ -24,7 +24,12 @@ const RealEstateProjection: React.FC = () => {
   const [contribution, setContribution] = useState(20000);
   const [duration, setDuration] = useState(20);
   const [rate, setRate] = useState(2.5);
-  const [rent, setRent] = useState(1000);
+  const [propertyType, setPropertyType] = useState<'appartement' | 'immeuble' | 'colocation'>('appartement');
+  const [rent, setRent] = useState(0);
+  const [lotCount, setLotCount] = useState(1);
+  const [lotRents, setLotRents] = useState<number[]>([0]);
+  const [roomCount, setRoomCount] = useState(1);
+  const [roomRents, setRoomRents] = useState<number[]>([0]);
   const [charges, setCharges] = useState(100);
   const [tax, setTax] = useState(1000);
   const [insurance, setInsurance] = useState(20);
@@ -75,7 +80,22 @@ const RealEstateProjection: React.FC = () => {
     sellYear,
     agencyFees,
     notaryFees,
+    propertyType,
   ]);
+
+  useEffect(() => {
+    if (propertyType === 'appartement') {
+      setRent(0);
+    } else if (propertyType === 'immeuble') {
+      setLotCount(1);
+      setLotRents([0]);
+      setRent(0);
+    } else if (propertyType === 'colocation') {
+      setRoomCount(1);
+      setRoomRents([0]);
+      setRent(0);
+    }
+  }, [propertyType]);
 
   const handleCalculate = () => {
     const data = buildRealEstateProjection({
@@ -113,6 +133,46 @@ const RealEstateProjection: React.FC = () => {
     } catch {
       setCityError('Erreur lors de la récupération du prix de la ville.');
     }
+  };
+
+  const handleLotCountChange = (value: number) => {
+    const count = Math.max(1, value);
+    setLotCount(count);
+    const newRents = [...lotRents];
+    if (newRents.length < count) {
+      newRents.push(...Array(count - newRents.length).fill(0));
+    } else {
+      newRents.splice(count);
+    }
+    setLotRents(newRents);
+    setRent(newRents.reduce((sum, r) => sum + r, 0));
+  };
+
+  const handleLotRentChange = (index: number, value: number) => {
+    const newRents = [...lotRents];
+    newRents[index] = value;
+    setLotRents(newRents);
+    setRent(newRents.reduce((sum, r) => sum + r, 0));
+  };
+
+  const handleRoomCountChange = (value: number) => {
+    const count = Math.max(1, value);
+    setRoomCount(count);
+    const newRents = [...roomRents];
+    if (newRents.length < count) {
+      newRents.push(...Array(count - newRents.length).fill(0));
+    } else {
+      newRents.splice(count);
+    }
+    setRoomRents(newRents);
+    setRent(newRents.reduce((sum, r) => sum + r, 0));
+  };
+
+  const handleRoomRentChange = (index: number, value: number) => {
+    const newRents = [...roomRents];
+    newRents[index] = value;
+    setRoomRents(newRents);
+    setRent(newRents.reduce((sum, r) => sum + r, 0));
   };
 
   const financingNeed = price + notaryFees + works + agencyFees - contribution;
@@ -331,19 +391,139 @@ const RealEstateProjection: React.FC = () => {
                   <span className="absolute right-3 top-2 text-gray-500">%</span>
                 </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Loyer mensuel attendu
-                </label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    value={rent}
-                    onChange={(e) => setRent(Number(e.target.value))}
+              <div className="col-span-3 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Type de bien
+                  </label>
+                  <select
+                    value={propertyType}
+                    onChange={(e) =>
+                      setPropertyType(
+                        e.target.value as 'appartement' | 'immeuble' | 'colocation'
+                      )
+                    }
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                  />
-                  <span className="absolute right-3 top-2 text-gray-500">€</span>
+                  >
+                    <option value="appartement">Appartement</option>
+                    <option value="immeuble">Immeuble</option>
+                    <option value="colocation">Colocation</option>
+                  </select>
                 </div>
+                {propertyType === 'appartement' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Loyer mensuel attendu
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        value={rent}
+                        onChange={(e) => setRent(Number(e.target.value))}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                      />
+                      <span className="absolute right-3 top-2 text-gray-500">€</span>
+                    </div>
+                  </div>
+                )}
+                {propertyType === 'immeuble' && (
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Nombre de lots
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={lotCount}
+                        onChange={(e) => handleLotCountChange(Number(e.target.value))}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                      />
+                    </div>
+                    {lotRents.map((lotRent, index) => (
+                      <div key={index} className="flex items-center space-x-2">
+                        <label className="text-sm font-medium text-gray-700">
+                          {`Lot ${index + 1}`}
+                        </label>
+                        <div className="relative flex-1">
+                          <input
+                            type="number"
+                            value={lotRent}
+                            onChange={(e) =>
+                              handleLotRentChange(index, Number(e.target.value))
+                            }
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                          />
+                          <span className="absolute right-3 top-2 text-gray-500">€</span>
+                        </div>
+                      </div>
+                    ))}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Loyer mensuel total
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          value={rent}
+                          readOnly
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100"
+                        />
+                        <span className="absolute right-3 top-2 text-gray-500">€</span>
+                      </div>
+                    </div>
+                  </>
+                )}
+                {propertyType === 'colocation' && (
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Nombre de chambres
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={roomCount}
+                        onChange={(e) =>
+                          handleRoomCountChange(Number(e.target.value))
+                        }
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                      />
+                    </div>
+                    {roomRents.map((roomRent, index) => (
+                      <div key={index} className="flex items-center space-x-2">
+                        <label className="text-sm font-medium text-gray-700">
+                          {`Chambre ${index + 1}`}
+                        </label>
+                        <div className="relative flex-1">
+                          <input
+                            type="number"
+                            value={roomRent}
+                            onChange={(e) =>
+                              handleRoomRentChange(index, Number(e.target.value))
+                            }
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                          />
+                          <span className="absolute right-3 top-2 text-gray-500">€</span>
+                        </div>
+                      </div>
+                    ))}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Loyer mensuel total
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          value={rent}
+                          readOnly
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100"
+                        />
+                        <span className="absolute right-3 top-2 text-gray-500">€</span>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
