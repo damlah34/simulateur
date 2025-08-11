@@ -20,19 +20,19 @@ import { fetchCityPrice } from '../utils/fetchCityPrice';
 import { RealEstateYearData } from '../types';
 
 const RealEstateProjection: React.FC = () => {
-  const [price, setPrice] = useState(200000);
-  const [contribution, setContribution] = useState(20000);
-  const [duration, setDuration] = useState(20);
-  const [rate, setRate] = useState(2.5);
+  const [price, setPrice] = useState(0);
+  const [contribution, setContribution] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [rate, setRate] = useState(0);
   const [propertyType, setPropertyType] = useState<'appartement' | 'immeuble' | 'colocation'>('appartement');
   const [rent, setRent] = useState(0);
-  const [lotCount, setLotCount] = useState(1);
+  const [lotCount, setLotCount] = useState(0);
   const [lotRents, setLotRents] = useState<number[]>([0]);
-  const [roomCount, setRoomCount] = useState(1);
+  const [roomCount, setRoomCount] = useState(0);
   const [roomRents, setRoomRents] = useState<number[]>([0]);
-  const [charges, setCharges] = useState(100);
-  const [tax, setTax] = useState(1000);
-  const [insurance, setInsurance] = useState(20);
+  const [charges, setCharges] = useState(0);
+  const [tax, setTax] = useState(0);
+  const [insurance, setInsurance] = useState(0);
   const [works, setWorks] = useState(0);
   const [cfe, setCfe] = useState(0);
   const [pnoInsurance, setPnoInsurance] = useState(0);
@@ -43,9 +43,7 @@ const RealEstateProjection: React.FC = () => {
   const [propertyGrowthRate, setPropertyGrowthRate] = useState(0);
   const [sellYear, setSellYear] = useState(duration);
   const [agencyFees, setAgencyFees] = useState(0);
-  const [notaryFees, setNotaryFees] = useState(
-    Math.round(calculateNotaryFees(price))
-  );
+  const [notaryFees, setNotaryFees] = useState(0);
   const [projection, setProjection] = useState<RealEstateYearData[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [city, setCity] = useState('');
@@ -191,7 +189,7 @@ const RealEstateProjection: React.FC = () => {
     accountingFees / 12 -
     monthlyPayment;
 
-  const grossYield = (rent * 12 * 100) / (price + works);
+  const grossYield = price + works > 0 ? (rent * 12 * 100) / (price + works) : 0;
   const netAnnualIncome =
     (rent * (1 - vacancy / 52) -
       charges -
@@ -202,27 +200,48 @@ const RealEstateProjection: React.FC = () => {
     tax -
     cfe -
     accountingFees;
+  const netYieldBase = price + notaryFees + works + agencyFees;
   const netYield =
-    (netAnnualIncome * 100) / (price + notaryFees + works + agencyFees);
+    netYieldBase > 0 ? (netAnnualIncome * 100) / netYieldBase : 0;
   const potentialSaleGain =
     projection.length > 0 ? projection[projection.length - 1].plusValue : 0;
   const globalBudget = price + works + notaryFees + agencyFees;
 
-  const netYieldColor =
-    netYield >= 7 ? 'text-emerald-600' : netYield >= 5.5 ? 'text-orange-600' : 'text-red-600';
-  const decision =
-    netYield >= 7
+  const netYieldColor = !showResults
+    ? 'text-gray-600'
+    : netYield >= 7
+    ? 'text-emerald-600'
+    : netYield >= 5.5
+    ? 'text-orange-600'
+    : 'text-red-600';
+  const decision = showResults
+    ? netYield >= 7
       ? 'Favorable'
       : netYield >= 5.5
       ? 'A Approfondir'
-      : 'NOGO (sauf exception patrimoniale)';
+      : 'NOGO (sauf exception patrimoniale)'
+    : '-';
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  interface TooltipPayload {
+    color: string;
+    name: string;
+    value: number;
+  }
+
+  const CustomTooltip = ({
+    active,
+    payload,
+    label,
+  }: {
+    active?: boolean;
+    payload?: TooltipPayload[];
+    label?: string;
+  }) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-white p-4 border rounded-lg shadow-lg">
           <p className="font-semibold mb-2">{`Année ${label}`}</p>
-          {payload.map((entry: any, index: number) => (
+          {payload.map((entry, index) => (
             <p key={index} className="text-sm" style={{ color: entry.color }}>
               {`${entry.name}: ${formatCurrency(entry.value)}`}
             </p>
