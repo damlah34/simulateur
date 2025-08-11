@@ -10,21 +10,33 @@ interface DVFRecord {
 export async function fetchCityPrice(cityCode: string): Promise<number> {
   const params = new URLSearchParams();
   params.set('dataset', 'demandes-de-valeurs-foncieres');
-  params.set('rows', '10000');
+  // API maximum allowed rows is 1000 per request
+  params.set('rows', '1000');
   params.set('refine.code_commune', cityCode);
   params.set('refine.nature_mutation', 'Vente');
 
-  const url = `https://data.economie.gouv.fr/api/records/1.0/search/?${params.toString()}`;
-  const res = await fetch(url);
-  if (!res.ok) {
-    throw new Error('Network response was not ok');
+  let start = 0;
+  const allRecords: DVFRecord[] = [];
+  while (true) {
+    params.set('start', start.toString());
+    const url = `https://data.economie.gouv.fr/api/records/1.0/search/?${params.toString()}`;
+    const res = await fetch(url);
+    if (!res.ok) {
+      throw new Error(`DVF API ${res.status} ${res.statusText}`);
+    }
+    const data = await res.json();
+    const records: DVFRecord[] = (data.records as DVFRecord[]) || [];
+    allRecords.push(...records);
+    if (records.length < 1000) {
+      break;
+    }
+    start += records.length;
   }
-  const data = await res.json();
   const now = new Date();
   const twoYearsAgo = new Date();
   twoYearsAgo.setMonth(now.getMonth() - 24);
 
-  const prices: number[] = ((data.records as DVFRecord[]) || [])
+  const prices: number[] = allRecords
     .map((record) => record.fields)
     .filter((f) => {
       const date = f.date_mutation ? new Date(f.date_mutation) : null;
