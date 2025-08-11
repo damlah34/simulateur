@@ -1,0 +1,10 @@
+node_modules/
+server/node_modules/
+client/node_modules/
+dist/
+build/
+server/dist/
+client/dist/
+.env
+server/.env
+client/.env
