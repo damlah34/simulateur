@@ -9,7 +9,7 @@ interface DVFRecord {
 
 export async function fetchCityPrice(cityCode: string): Promise<number> {
   const params = new URLSearchParams();
-  params.set('dataset', 'demandes-de-valeurs-foncieres');
+  params.set('dataset', 'dvf_demandes-de-valeurs-foncieres');
   // API maximum allowed rows is 1000 per request
   params.set('rows', '1000');
   params.set('refine.code_commune', cityCode);
@@ -21,6 +21,11 @@ export async function fetchCityPrice(cityCode: string): Promise<number> {
     params.set('start', start.toString());
     const url = `https://data.economie.gouv.fr/api/records/1.0/search/?${params.toString()}`;
     const res = await fetch(url);
+    if (res.status === 404) {
+      throw new Error(
+        'DVF dataset not found. Please verify the dataset slug is correct.',
+      );
+    }
     if (!res.ok) {
       throw new Error(`DVF API ${res.status} ${res.statusText}`);
     }
