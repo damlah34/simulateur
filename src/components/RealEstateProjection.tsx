@@ -146,8 +146,12 @@ const RealEstateProjection: React.FC = () => {
       setAverageCityPrice(null);
       const pricePerSqm = await fetchCityPrice(cityCode);
       setAverageCityPrice(pricePerSqm);
-    } catch {
-      setCityError('Erreur lors de la récupération du prix de la ville.');
+    } catch (err) {
+      setCityError(
+        err instanceof Error
+          ? err.message
+          : 'Erreur lors de la récupération du prix de la ville.',
+      );
     }
   };
 
