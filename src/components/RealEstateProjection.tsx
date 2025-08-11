@@ -125,12 +125,26 @@ const RealEstateProjection: React.FC = () => {
   };
 
   const handleCityBlur = async () => {
-    const cityName = selectedCity ? selectedCity.nom : city.replace(/^\d+\s+/, '');
-    if (!cityName) return;
+    const inputCity = city.replace(/^\d+\s+/, '');
+    let cityCode = selectedCity?.code;
+    if (!cityCode && inputCity) {
+      try {
+        const results = await fetchCities(inputCity);
+        if (results.length > 0) {
+          cityCode = results[0].code;
+        }
+      } catch {
+        // ignore lookup errors
+      }
+    }
+    if (!cityCode) {
+      setCityError('Ville introuvable.');
+      return;
+    }
     try {
       setCityError(null);
       setAverageCityPrice(null);
-      const pricePerSqm = await fetchCityPrice(cityName);
+      const pricePerSqm = await fetchCityPrice(cityCode);
       setAverageCityPrice(pricePerSqm);
     } catch {
       setCityError('Erreur lors de la récupération du prix de la ville.');
