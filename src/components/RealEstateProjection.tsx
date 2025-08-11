@@ -17,6 +17,7 @@ import {
   formatCurrency,
 } from '../utils/calculations';
 import { fetchCityPrice } from '../utils/fetchCityPrice';
+import { fetchCities, CitySuggestion } from '../utils/fetchCities';
 import { RealEstateYearData } from '../types';
 
 const RealEstateProjection: React.FC = () => {
@@ -47,6 +48,8 @@ const RealEstateProjection: React.FC = () => {
   const [projection, setProjection] = useState<RealEstateYearData[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [city, setCity] = useState('');
+  const [citySuggestions, setCitySuggestions] = useState<CitySuggestion[]>([]);
+  const [selectedCity, setSelectedCity] = useState<CitySuggestion | null>(null);
   const [surface, setSurface] = useState(0);
   const [averageCityPrice, setAverageCityPrice] = useState<number | null>(null);
   const [cityError, setCityError] = useState<string | null>(null);
@@ -122,15 +125,37 @@ const RealEstateProjection: React.FC = () => {
   };
 
   const handleCityBlur = async () => {
-    if (!city) return;
+    const cityName = selectedCity ? selectedCity.nom : city.replace(/^\d+\s+/, '');
+    if (!cityName) return;
     try {
       setCityError(null);
       setAverageCityPrice(null);
-      const pricePerSqm = await fetchCityPrice(city);
+      const pricePerSqm = await fetchCityPrice(cityName);
       setAverageCityPrice(pricePerSqm);
     } catch {
       setCityError('Erreur lors de la récupération du prix de la ville.');
     }
+  };
+
+  const handleCityChange = async (value: string) => {
+    setCity(value);
+    setSelectedCity(null);
+    if (value.length < 2) {
+      setCitySuggestions([]);
+      return;
+    }
+    try {
+      const results = await fetchCities(value);
+      setCitySuggestions(results);
+    } catch {
+      setCitySuggestions([]);
+    }
+  };
+
+  const handleCitySelect = (suggestion: CitySuggestion) => {
+    setCity(`${suggestion.codePostal} ${suggestion.nom}`);
+    setSelectedCity(suggestion);
+    setCitySuggestions([]);
   };
 
   const handleLotCountChange = (value: number) => {
@@ -278,13 +303,28 @@ const RealEstateProjection: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Ville
                 </label>
-                <input
-                  type="text"
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
-                  onBlur={handleCityBlur}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                />
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={city}
+                    onChange={(e) => handleCityChange(e.target.value)}
+                    onBlur={handleCityBlur}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                  />
+                  {citySuggestions.length > 0 && (
+                    <ul className="absolute z-10 bg-white border border-gray-300 mt-1 max-h-60 overflow-y-auto w-full rounded-md shadow-lg">
+                      {citySuggestions.map((s) => (
+                        <li
+                          key={`${s.code}-${s.codePostal}`}
+                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                          onMouseDown={() => handleCitySelect(s)}
+                        >
+                          {s.codePostal} {s.nom}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
                 {averageCityPrice !== null && (
                   <p className="text-sm text-gray-500 mt-1">
                     Prix moyen : {formatCurrency(averageCityPrice)} /m²
