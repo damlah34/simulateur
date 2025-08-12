@@ -3,11 +3,16 @@ export interface User {
   firstName: string;
   email: string;
 }
+export type RegisterResult = { ok: true } | { ok: false; error: string };
 
 export interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<boolean>;
-  register: (firstName: string, email: string, password: string) => Promise<boolean>;
+  register: (
+    firstName: string,
+    email: string,
+    password: string,
+  ) => Promise<RegisterResult>;
   logout: () => void;
   isAuthenticated: boolean;
 }

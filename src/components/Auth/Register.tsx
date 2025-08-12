@@ -33,18 +33,13 @@ const Register: React.FC<RegisterProps> = ({ onNavigate }) => {
 
     setLoading(true);
 
-    try {
-      const success = await register(firstName, email, password);
-      if (success) {
-        onNavigate('home');
-      } else {
-        setError('Cette adresse email est déjà utilisée');
-      }
-    } catch (err) {
-      setError('Une erreur est survenue lors de l\'inscription');
-    } finally {
-      setLoading(false);
+    const result = await register(firstName, email, password);
+    if (result.ok) {
+      onNavigate('home');
+    } else {
+      setError(result.error);
     }
+    setLoading(false);
   };
 
   return (

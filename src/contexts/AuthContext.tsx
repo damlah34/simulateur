@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { User, AuthContextType } from '../types';
+import { User, AuthContextType, RegisterResult } from '../types';
 
 const API_BASE = 'http://localhost:3001/api';
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -19,7 +19,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }, []);
 
-  const register = async (firstName: string, email: string, password: string): Promise<boolean> => {
+  const register = async (
+    firstName: string,
+    email: string,
+    password: string,
+  ): Promise<RegisterResult> => {
     try {
       const res = await fetch(`${API_BASE}/auth/register`, {
         method: 'POST',
@@ -30,15 +34,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const newUser: User = await res.json();
         setUser(newUser);
         localStorage.setItem('focusPatrimoineUser', JSON.stringify(newUser));
-        return true;
-      }
-      if (res.status === 409) {
-        return false;
-      }
-      return false;
     } catch (error) {
       console.error('Registration error:', error);
-      return false;
+      return { ok: false, error: "Une erreur est survenue lors de l'inscription" };
     }
   };
 
