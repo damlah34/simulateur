@@ -5,37 +5,42 @@ import InflationBeat from './components/InflationBeat';
 import RealEstateProjection from './components/RealEstateProjection';
 import Login from './components/Auth/Login';
 import Register from './components/Auth/Register';
-import { AuthProvider } from './contexts/AuthContext';
+import { useAuth } from './contexts/AuthContext';
 
 function App() {
   const [currentPage, setCurrentPage] = useState('home');
+  const { isAuthenticated } = useAuth();
+
+  const handleNavigate = (page: string) => {
+    if (!isAuthenticated && (page === 'inflation-beat' || page === 'projet-immo')) {
+      setCurrentPage('login');
+    } else {
+      setCurrentPage(page);
+    }
+  };
 
   const renderPage = () => {
     switch (currentPage) {
       case 'home':
-        return <Home onNavigate={setCurrentPage} />;
+        return <Home onNavigate={handleNavigate} />;
       case 'inflation-beat':
         return <InflationBeat />;
       case 'projet-immo':
         return <RealEstateProjection />;
       case 'login':
-        return <Login onNavigate={setCurrentPage} />;
+        return <Login onNavigate={handleNavigate} />;
       case 'register':
-        return <Register onNavigate={setCurrentPage} />;
+        return <Register onNavigate={handleNavigate} />;
       default:
-        return <Home onNavigate={setCurrentPage} />;
+        return <Home onNavigate={handleNavigate} />;
     }
   };
 
   return (
-    <AuthProvider>
-      <div className="min-h-screen bg-gray-50 font-inter">
-        <Header currentPage={currentPage} onNavigate={setCurrentPage} />
-        <main>
-          {renderPage()}
-        </main>
-      </div>
-    </AuthProvider>
+    <div className="min-h-screen bg-gray-50 font-inter">
+      <Header currentPage={currentPage} onNavigate={handleNavigate} />
+      <main>{renderPage()}</main>
+    </div>
   );
 }
 
