@@ -9,7 +9,7 @@ interface DVFRecord {
 
 export async function fetchCityPrice(cityCode: string): Promise<number> {
   const params = new URLSearchParams();
-  params.set('dataset', 'dvf_demandes-de-valeurs-foncieres');
+  params.set('dataset', 'dvf_dvf');
   // API maximum allowed rows is 1000 per request
   params.set('rows', '1000');
   params.set('refine.code_commune', cityCode);
