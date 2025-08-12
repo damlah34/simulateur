@@ -26,7 +26,8 @@ const Login: React.FC<LoginProps> = ({ onNavigate }) => {
       } else {
         setError('Email ou mot de passe incorrect');
       }
-    } catch (err) {
+    } catch (error) {
+      console.error('Login error:', error);
       setError('Une erreur est survenue lors de la connexion');
     } finally {
       setLoading(false);

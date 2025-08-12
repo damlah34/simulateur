@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { User, AuthContextType } from '../types';
+import { User, AuthContextType, RegisterResult } from '../types';
 
+const API_BASE = 'http://localhost:3001/api';
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 interface AuthProviderProps {
@@ -18,54 +19,45 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }, []);
 
-  const register = async (firstName: string, email: string, password: string): Promise<boolean> => {
+  const register = async (
+    firstName: string,
+    email: string,
+    password: string,
+  ): Promise<RegisterResult> => {
     try {
-      // Simulate registration process
-      const existingUsers = JSON.parse(localStorage.getItem('focusPatrimoineUsers') || '[]');
-      
-      // Check if user already exists
-      if (existingUsers.find((u: any) => u.email === email)) {
-        return false;
+      const res = await fetch(`${API_BASE}/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ firstName, email, password }),
+      });
+      if (res.ok) {
+        const newUser: User = await res.json();
+        setUser(newUser);
+        localStorage.setItem('focusPatrimoineUser', JSON.stringify(newUser));
+        return { ok: true };
       }
-
-      const newUser: User = {
-        id: Date.now().toString(),
-        firstName,
-        email,
-      };
-
-      // Save user credentials (in real app, this would be handled by backend)
-      const userWithPassword = { ...newUser, password };
-      existingUsers.push(userWithPassword);
-      localStorage.setItem('focusPatrimoineUsers', JSON.stringify(existingUsers));
-      
-      // Set current user
-      setUser(newUser);
-      localStorage.setItem('focusPatrimoineUser', JSON.stringify(newUser));
-      
-      return true;
+      const data = await res.json().catch(() => null);
+      const message = data?.error || "Une erreur est survenue lors de l'inscription";
+      return { ok: false, error: message };
     } catch (error) {
       console.error('Registration error:', error);
-      return false;
+      return { ok: false, error: "Une erreur est survenue lors de l'inscription" };
     }
   };
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
-      const existingUsers = JSON.parse(localStorage.getItem('focusPatrimoineUsers') || '[]');
-      const foundUser = existingUsers.find((u: any) => u.email === email && u.password === password);
-      
-      if (foundUser) {
-        const user: User = {
-          id: foundUser.id,
-          firstName: foundUser.firstName,
-          email: foundUser.email,
-        };
+      const res = await fetch(`${API_BASE}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      if (res.ok) {
+        const user: User = await res.json();
         setUser(user);
         localStorage.setItem('focusPatrimoineUser', JSON.stringify(user));
         return true;
       }
-      
       return false;
     } catch (error) {
       console.error('Login error:', error);
