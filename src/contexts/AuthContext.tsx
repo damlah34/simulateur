@@ -37,11 +37,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         return { ok: true };
       }
 
-      const { error } = await res.json().catch(() => ({ error: "Une erreur est survenue lors de l'inscription" }));
-      return { ok: false, error };
+      let errorMessage = "Une erreur est survenue lors de l'inscription";
+      try {
+        const data = await res.json();
+        if (data?.error) {
+          errorMessage = data.error;
+        } else if (res.status >= 500) {
+          errorMessage = 'Erreur serveur. Veuillez réessayer plus tard.';
+        }
+      } catch {
+        errorMessage = res.status >= 500
+          ? 'Erreur serveur. Veuillez réessayer plus tard.'
+          : 'Réponse inattendue du serveur';
+      }
+      return { ok: false, error: errorMessage };
     } catch (error) {
       console.error('Registration error:', error);
-      return { ok: false, error: "Une erreur est survenue lors de l'inscription" };
+      return { ok: false, error: 'Impossible de contacter le serveur. Veuillez réessayer plus tard.' };
     }
   };
 

@@ -31,6 +31,9 @@ router.post('/register', async (req, res) => {
     );
     const user = result.rows[0];
     res.json({ id: user.id, firstName: user.first_name, email: user.email });
+  } catch (err) {
+    console.error('Registration error:', err);
+    return res.status(500).json({ error: "Erreur lors de l'inscription" });
   } finally {
     client.release();
   }
@@ -62,6 +65,9 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Identifiants invalides' });
     }
     res.json({ id: user.id, firstName: user.first_name, email: user.email });
+  } catch (err) {
+    console.error('Login error:', err);
+    return res.status(500).json({ error: 'Erreur lors de la connexion' });
   } finally {
     client.release();
   }
