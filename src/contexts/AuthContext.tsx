@@ -34,6 +34,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const newUser: User = await res.json();
         setUser(newUser);
         localStorage.setItem('focusPatrimoineUser', JSON.stringify(newUser));
+        return { ok: true };
+      }
+
+      const { error } = await res.json().catch(() => ({ error: "Une erreur est survenue lors de l'inscription" }));
+      return { ok: false, error };
     } catch (error) {
       console.error('Registration error:', error);
       return { ok: false, error: "Une erreur est survenue lors de l'inscription" };
