@@ -19,3 +19,16 @@ npm run lint
 npm run build
 ```
 
+### Environment
+
+The frontend expects an API endpoint to handle authentication and other
+requests. Configure the API base URL via the `VITE_API_BASE` environment
+variable when starting the development server:
+
+```bash
+VITE_API_BASE=http://localhost:3001/api npm run dev
+```
+
+If `VITE_API_BASE` is not provided, the application defaults to `/api`, which
+assumes that the backend is served from the same origin as the frontend.
+
