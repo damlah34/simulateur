@@ -1,7 +1,10 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, AuthContextType, RegisterResult } from '../types';
 
-const API_BASE = 'http://localhost:3001/api';
+// Allow configuring the API server through an environment variable so the
+// frontend can run against remote backends. Fall back to a relative path which
+// works when the API is served from the same origin.
+const API_BASE = import.meta.env.VITE_API_BASE || '/api';
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 interface AuthProviderProps {
