@@ -3,20 +3,12 @@ import Header from './components/Header';
 import Home from './components/Home';
 import InflationBeat from './components/InflationBeat';
 import RealEstateProjection from './components/RealEstateProjection';
-import Login from './components/Auth/Login';
-import Register from './components/Auth/Register';
-import { useAuth } from './contexts/AuthContext';
 
 function App() {
   const [currentPage, setCurrentPage] = useState('home');
-  const { isAuthenticated } = useAuth();
 
   const handleNavigate = (page: string) => {
-    if (!isAuthenticated && (page === 'inflation-beat' || page === 'projet-immo')) {
-      setCurrentPage('login');
-    } else {
-      setCurrentPage(page);
-    }
+    setCurrentPage(page);
   };
 
   const renderPage = () => {
@@ -27,10 +19,6 @@ function App() {
         return <InflationBeat />;
       case 'projet-immo':
         return <RealEstateProjection />;
-      case 'login':
-        return <Login onNavigate={handleNavigate} />;
-      case 'register':
-        return <Register onNavigate={handleNavigate} />;
       default:
         return <Home onNavigate={handleNavigate} />;
     }

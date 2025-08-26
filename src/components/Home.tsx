@@ -107,7 +107,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
             Rejoignez des milliers d'épargnants qui ont déjà pris le contrôle de leurs finances
           </p>
           <button
-            onClick={() => onNavigate('register')}
+            onClick={() => onNavigate('inflation-beat')}
             className="bg-white text-primary-600 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-50 transform hover:scale-105 transition-all duration-200 shadow-lg"
           >
             Commencer gratuitement
