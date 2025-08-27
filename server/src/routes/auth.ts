@@ -1,75 +1,74 @@
-import { Router } from 'express';
-import { z } from 'zod';
-import crypto from 'crypto';
-import { pool } from '../db/pool';
+import { Router } from "express";
+import { z } from "zod";
+import { getSupabaseForServer } from "../supabase";
 
 const router = Router();
 
-router.post('/register', async (req, res) => {
-  const schema = z.object({
-    firstName: z.string().min(1),
-    email: z.string().email(),
-    password: z.string().min(6),
-  });
-  const parsed = schema.safeParse(req.body);
-  if (!parsed.success) {
-    return res.status(400).json({ error: 'Paramètres invalides' });
-  }
-  const { firstName, email, password } = parsed.data;
-  const client = await pool.connect();
+const signupSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(8),
+  fullName: z.string().min(1).optional(),
+});
+
+const loginSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(8),
+});
+
+/**
+ * POST /api/auth/signup
+ * Crée un compte Supabase + enregistre un profil minimal dans la table profiles.
+ */
+// --- /signup SANS insertion manuelle dans profiles ---
+// (on laisse le TRIGGER SQL créer la ligne dans public.profiles)
+router.post("/signup", async (req, res) => {
   try {
-    const existing = await client.query('SELECT id FROM users WHERE email = $1', [email]);
-    if (existing.rowCount > 0) {
-      return res.status(409).json({ error: 'Email déjà utilisé' });
+    const body = signupSchema.parse(req.body);
+    const supabase = getSupabaseForServer();
+
+    const { data, error } = await supabase.auth.signUp({
+      email: body.email,
+      password: body.password,
+      options: {
+        data: body.fullName ? { full_name: body.fullName } : undefined,
+      },
+    });
+    if (error) return res.status(400).json({ error: error.message });
+
+    return res.status(201).json({ message: "Signup successful" });
+  } catch (e: any) {
+    if (e?.issues) {
+      return res.status(400).json({ error: "Invalid payload", details: e.issues });
     }
-    const salt = crypto.randomBytes(16).toString('hex');
-    const hash = crypto.pbkdf2Sync(password, salt, 1000, 64, 'sha512').toString('hex');
-    const combined = `${salt}:${hash}`;
-    const result = await client.query(
-      'INSERT INTO users(first_name, email, password_hash) VALUES ($1, $2, $3) RETURNING id, first_name, email',
-      [firstName, email, combined],
-    );
-    const user = result.rows[0];
-    res.json({ id: user.id, firstName: user.first_name, email: user.email });
-  } catch (err) {
-    console.error('Registration error:', err);
-    return res.status(500).json({ error: "Erreur lors de l'inscription" });
-  } finally {
-    client.release();
+    return res.status(500).json({ error: e?.message ?? "Unexpected error" });
   }
 });
 
-router.post('/login', async (req, res) => {
-  const schema = z.object({
-    email: z.string().email(),
-    password: z.string().min(1),
-  });
-  const parsed = schema.safeParse(req.body);
-  if (!parsed.success) {
-    return res.status(400).json({ error: 'Paramètres invalides' });
-  }
-  const { email, password } = parsed.data;
-  const client = await pool.connect();
+
+/**
+ * POST /api/auth/login
+ * Retourne un access_token (JWT) que le front utilisera dans Authorization: Bearer <token>.
+ */
+router.post("/login", async (req, res) => {
   try {
-    const result = await client.query(
-      'SELECT id, first_name, email, password_hash FROM users WHERE email = $1',
-      [email],
-    );
-    if (result.rowCount === 0) {
-      return res.status(401).json({ error: 'Identifiants invalides' });
+    const body = loginSchema.parse(req.body);
+    const supabase = getSupabaseForServer();
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: body.email,
+      password: body.password,
+    });
+    if (error) return res.status(401).json({ error: error.message });
+
+    const token = data.session?.access_token;
+    if (!token) return res.status(500).json({ error: "No access token returned" });
+
+    return res.json({ access_token: token });
+  } catch (e: any) {
+    if (e?.issues) {
+      return res.status(400).json({ error: "Invalid payload", details: e.issues });
     }
-    const user = result.rows[0];
-    const [salt, storedHash] = user.password_hash.split(':');
-    const hash = crypto.pbkdf2Sync(password, salt, 1000, 64, 'sha512').toString('hex');
-    if (hash !== storedHash) {
-      return res.status(401).json({ error: 'Identifiants invalides' });
-    }
-    res.json({ id: user.id, firstName: user.first_name, email: user.email });
-  } catch (err) {
-    console.error('Login error:', err);
-    return res.status(500).json({ error: 'Erreur lors de la connexion' });
-  } finally {
-    client.release();
+    return res.status(500).json({ error: e?.message ?? "Unexpected error" });
   }
 });
 
