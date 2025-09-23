@@ -30,7 +30,7 @@ const InflationBeat: React.FC = () => {
     } else {
       setComparisonData([]);
     }
-  }, [initialAmount, customRate, duration, monthlyContribution, livretARate]);
+  }, [initialAmount, customRate, duration, monthlyContribution, livretARate, showResults]);
 
   const finalCustomValue = comparisonData.length > 0 ? comparisonData[comparisonData.length - 1].custom : 0;
   const finalLivretAValue = comparisonData.length > 0 ? comparisonData[comparisonData.length - 1].livretA : 0;

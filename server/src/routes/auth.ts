@@ -26,7 +26,7 @@ router.post("/signup", async (req, res) => {
     const body = signupSchema.parse(req.body);
     const supabase = getSupabaseForServer();
 
-    const { data, error } = await supabase.auth.signUp({
+    const { error } = await supabase.auth.signUp({
       email: body.email,
       password: body.password,
       options: {

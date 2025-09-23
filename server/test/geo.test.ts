@@ -13,7 +13,7 @@ const sample = [
   },
 ];
 
-vi.stubGlobal('fetch', vi.fn(async (url: string) => ({
+vi.stubGlobal('fetch', vi.fn(async (_url: string) => ({
   ok: true,
   json: async () => sample,
 })) as any);
