@@ -1,17 +1,21 @@
-import type { Request, Response, NextFunction } from "express";
-import { getUserFromJWT } from "../supabase";
+import { Request, Response, NextFunction } from "express";
+import { getSupabaseForServer } from "../supabase";
 
 export async function requireAuth(req: Request, res: Response, next: NextFunction) {
   try {
-    const auth = req.header("Authorization")?.trim(); // "Bearer <jwt>"
-    const jwt = auth?.startsWith("Bearer ") ? auth.slice(7) : undefined;
-    if (!jwt) return res.status(401).json({ error: "Missing Authorization header" });
+    const auth = req.headers.authorization || "";
+    const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+    if (!token) return res.status(401).json({ error: "Missing token" });
 
-    const { userId } = await getUserFromJWT(jwt);
-    // @ts-expect-error: on enrichit req avec les infos user
-    req.user = { jwt, userId };
+    // On vérifie le token côté Supabase
+    const supabase = getSupabaseForServer();
+    const { data, error } = await supabase.auth.getUser(token);
+    if (error || !data?.user) return res.status(401).json({ error: "Invalid token" });
+
+    // On stocke pour la suite
+    (req as any).user = { id: data.user.id, jwt: token };
     next();
-  } catch {
-    return res.status(401).json({ error: "Invalid or expired token" });
+  } catch (e: any) {
+    res.status(401).json({ error: e?.message || "Unauthorized" });
   }
 }

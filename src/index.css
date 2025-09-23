@@ -1,3 +1,8 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Optionnel : reset doux pour body */
+html, body, #root {
+  height: 100%;
+}

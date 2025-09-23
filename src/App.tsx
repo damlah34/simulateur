@@ -17,7 +17,7 @@ function App() {
       return;
     }
     setCurrentPage(page);
-  };
+  }, []);
 
   useEffect(() => {
     if (!user && currentPage === 'users') {
@@ -29,9 +29,9 @@ function App() {
 
   const renderPage = () => {
     switch (currentPage) {
-      case 'home':
+      case "home":
         return <Home onNavigate={handleNavigate} />;
-      case 'inflation-beat':
+      case "inflation-beat":
         return <InflationBeat />;
       case 'projet-immo':
         return <RealEstateProjection />;
@@ -53,11 +53,11 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 font-inter">
-      <Header currentPage={currentPage} onNavigate={handleNavigate} />
-      <main>{renderPage()}</main>
-    </div>
+    <AuthProvider>
+      <div className="min-h-screen bg-gray-50 font-inter">
+        <Header currentPage={currentPage} onNavigate={handleNavigate} />
+        <main>{renderPage()}</main>
+      </div>
+    </AuthProvider>
   );
 }
-
-export default App;

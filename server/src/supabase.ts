@@ -1,4 +1,15 @@
+// server/src/supabase.ts
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import dotenv from "dotenv";
+import { fileURLToPath } from "node:url";
+import { dirname, resolve } from "node:path";
+
+// ✅ ESM-safe __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// ✅ charge server/.env.local avant d'utiliser process.env
+dotenv.config({ path: resolve(__dirname, "../.env.local") });
 
 function requireEnv(name: string): string {
   const v = process.env[name];
@@ -6,15 +17,14 @@ function requireEnv(name: string): string {
   return v;
 }
 
-/**
- * Crée un client Supabase côté serveur.
- * - Si `jwt` est fourni, on l'injecte en header Authorization pour que les requêtes
- *   soient exécutées avec les RLS de l'utilisateur.
- */
-export function getSupabaseForServer(jwt?: string): SupabaseClient {
-  const SUPABASE_URL = requireEnv("SUPABASE_URL");
-  const SUPABASE_ANON_KEY = requireEnv("SUPABASE_ANON_KEY");
+export const SUPABASE_URL = requireEnv("SUPABASE_URL");
+export const SUPABASE_ANON_KEY = requireEnv("SUPABASE_ANON_KEY");
 
+// ⚠️ Clé service (secrète, côté serveur uniquement)
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+
+/** Client côté serveur (respecte RLS si tu passes le JWT utilisateur). */
+export function getSupabaseForServer(jwt?: string): SupabaseClient {
   const headers: Record<string, string> = { "X-App-Source": "server" };
   if (jwt) headers.Authorization = `Bearer ${jwt}`;
 
@@ -24,11 +34,10 @@ export function getSupabaseForServer(jwt?: string): SupabaseClient {
   });
 }
 
-/** Valide un JWT et renvoie l'id utilisateur. */
-export async function getUserFromJWT(jwt: string): Promise<{ userId: string }> {
-  if (!jwt) throw new Error("Missing JWT");
-  const supabase = getSupabaseForServer();
-  const { data, error } = await supabase.auth.getUser(jwt);
-  if (error || !data?.user) throw new Error(`Invalid token: ${error?.message ?? "no user"}`);
-  return { userId: data.user.id };
+/** Client admin (bypass RLS) — nécessite SUPABASE_SERVICE_ROLE_KEY. */
+export function getSupabaseAdmin(): SupabaseClient {
+  const key = SUPABASE_SERVICE_ROLE_KEY || SUPABASE_ANON_KEY; // fallback doux si la clé service manque
+  return createClient(SUPABASE_URL, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
 }

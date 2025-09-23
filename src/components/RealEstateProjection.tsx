@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Home as HomeIcon, BarChart } from 'lucide-react';
+// src/components/RealEstateProjection.tsx
+import React, { useEffect, useMemo, useState } from "react";
+import { Home as HomeIcon, BarChart } from "lucide-react";
 import {
   LineChart,
   Line,
@@ -9,27 +10,40 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-} from 'recharts';
+} from "recharts";
 import {
   calculateNotaryFees,
   calculateMonthlyPayment,
   buildRealEstateProjection,
   formatCurrency,
-} from '../utils/calculations';
-import { fetchCities, CitySuggestion } from '../utils/fetchCities';
-import { RealEstateYearData } from '../types';
+} from "../utils/calculations";
+import { fetchCities, CitySuggestion } from "../utils/fetchCities";
+import { RealEstateYearData } from "../types";
+import { useAuth } from "../contexts/AuthContext";
 
-const RealEstateProjection: React.FC = () => {
+
+type Props = {
+  onNavigate?: (page: string, params?: any) => void;
+};
+
+export default function RealEstateProjection({ onNavigate }: Props) {
+  // ------------------ États principaux ------------------
   const [price, setPrice] = useState(0);
   const [contribution, setContribution] = useState(0);
-  const [duration, setDuration] = useState(0);
-  const [rate, setRate] = useState(0);
-  const [propertyType, setPropertyType] = useState<'appartement' | 'immeuble' | 'colocation'>('appartement');
+
+  // Default duration & rate as requested, but we won’t overwrite user values later:
+  const [duration, setDuration] = useState(20); // défaut 20 ans
+  const [rate, setRate] = useState(3); // défaut 3%
+
+  const [propertyType, setPropertyType] =
+    useState<"appartement" | "immeuble" | "colocation">("appartement");
+
   const [rent, setRent] = useState(0);
   const [lotCount, setLotCount] = useState(0);
   const [lotRents, setLotRents] = useState<number[]>([0]);
   const [roomCount, setRoomCount] = useState(0);
   const [roomRents, setRoomRents] = useState<number[]>([0]);
+
   const [charges, setCharges] = useState(0);
   const [tax, setTax] = useState(0);
   const [insurance, setInsurance] = useState(0);
@@ -41,18 +55,31 @@ const RealEstateProjection: React.FC = () => {
   const [rentGrowth, setRentGrowth] = useState(0);
   const [vacancy, setVacancy] = useState(0);
   const [propertyGrowthRate, setPropertyGrowthRate] = useState(0);
-  const [sellYear, setSellYear] = useState(duration);
+
+  // Défaut demandé : année de revente = 20 ans
+  const [sellYear, setSellYear] = useState(20);
+
   const [agencyFees, setAgencyFees] = useState(0);
   const [notaryFees, setNotaryFees] = useState(0);
   const [projection, setProjection] = useState<RealEstateYearData[]>([]);
   const [showResults, setShowResults] = useState(false);
-  const [city, setCity] = useState('');
+  const [city, setCity] = useState("");
   const [citySuggestions, setCitySuggestions] = useState<CitySuggestion[]>([]);
 
+  // Enregistrement
+  const [title, setTitle] = useState("Projet locatif");
+  const [saving, setSaving] = useState(false);
+  const [saveErr, setSaveErr] = useState<string | null>(null);
+  const [saveOk, setSaveOk] = useState(false);
+  const [saveAsLoading, setSaveAsLoading] = useState(false);
+  const { token, authFetch: af } = useAuth();
+
+  // ------------------ Effets calculs de base ------------------
   useEffect(() => {
     setNotaryFees(calculateNotaryFees(price));
   }, [price]);
 
+  // Reset projection quand un input important change
   useEffect(() => {
     setShowResults(false);
     setProjection([]);
@@ -79,107 +106,36 @@ const RealEstateProjection: React.FC = () => {
     propertyType,
   ]);
 
+  // Ajustements du type de bien
   useEffect(() => {
-    if (propertyType === 'appartement') {
+    if (propertyType === "appartement") {
       setRent(0);
-    } else if (propertyType === 'immeuble') {
+    } else if (propertyType === "immeuble") {
       setLotCount(1);
       setLotRents([0]);
       setRent(0);
-    } else if (propertyType === 'colocation') {
+    } else if (propertyType === "colocation") {
       setRoomCount(1);
       setRoomRents([0]);
       setRent(0);
     }
   }, [propertyType]);
 
-  const handleCalculate = () => {
-    const data = buildRealEstateProjection({
-      price,
-      contribution,
-      duration,
-      rate,
-      rent,
-      charges,
-      tax,
-      insurance,
-      works,
-      cfe,
-      pnoInsurance,
-      accountingFees,
-      managementFees,
-      rentGrowth,
-      vacancyWeeks: vacancy,
-      propertyGrowthRate,
-      sellYear,
-      agencyFees,
-      notaryFees,
-    });
-    setProjection(data);
-    setShowResults(true);
-  };
+  // ------------------ Calculs dépendants ------------------
+  const financingNeed = useMemo(
+    () => price + notaryFees + works + agencyFees - contribution,
+    [price, notaryFees, works, agencyFees, contribution]
+  );
 
-
-  const handleCityChange = async (value: string) => {
-    setCity(value);
-    if (value.length < 2) {
-      setCitySuggestions([]);
-      return;
+  // ⚠️ Règle demandée : si besoin > 0 → par défaut durée=20 et taux=3 SANS écraser une saisie
+  useEffect(() => {
+    if (financingNeed > 0) {
+      if (!duration || duration <= 0) setDuration(20);
+      if (!rate || rate <= 0) setRate(3);
     }
-    try {
-      const results = await fetchCities(value);
-      setCitySuggestions(results);
-    } catch {
-      setCitySuggestions([]);
-    }
-  };
+    // Si besoin = 0, on n'impose rien, on masque juste les champs (voir rendu)
+  }, [financingNeed, duration, rate]);
 
-  const handleCitySelect = (suggestion: CitySuggestion) => {
-    setCity(`${suggestion.codePostal} ${suggestion.nom}`);
-    setCitySuggestions([]);
-  };
-
-  const handleLotCountChange = (value: number) => {
-    const count = Math.max(1, value);
-    setLotCount(count);
-    const newRents = [...lotRents];
-    if (newRents.length < count) {
-      newRents.push(...Array(count - newRents.length).fill(0));
-    } else {
-      newRents.splice(count);
-    }
-    setLotRents(newRents);
-    setRent(newRents.reduce((sum, r) => sum + r, 0));
-  };
-
-  const handleLotRentChange = (index: number, value: number) => {
-    const newRents = [...lotRents];
-    newRents[index] = value;
-    setLotRents(newRents);
-    setRent(newRents.reduce((sum, r) => sum + r, 0));
-  };
-
-  const handleRoomCountChange = (value: number) => {
-    const count = Math.max(1, value);
-    setRoomCount(count);
-    const newRents = [...roomRents];
-    if (newRents.length < count) {
-      newRents.push(...Array(count - newRents.length).fill(0));
-    } else {
-      newRents.splice(count);
-    }
-    setRoomRents(newRents);
-    setRent(newRents.reduce((sum, r) => sum + r, 0));
-  };
-
-  const handleRoomRentChange = (index: number, value: number) => {
-    const newRents = [...roomRents];
-    newRents[index] = value;
-    setRoomRents(newRents);
-    setRent(newRents.reduce((sum, r) => sum + r, 0));
-  };
-
-  const financingNeed = price + notaryFees + works + agencyFees - contribution;
   const loanAmount = financingNeed;
   const monthlyPayment =
     loanAmount > 0 ? calculateMonthlyPayment(loanAmount, rate, duration) : 0;
@@ -207,33 +163,229 @@ const RealEstateProjection: React.FC = () => {
     cfe -
     accountingFees;
   const netYieldBase = price + notaryFees + works + agencyFees;
-  const netYield =
-    netYieldBase > 0 ? (netAnnualIncome * 100) / netYieldBase : 0;
+  const netYield = netYieldBase > 0 ? (netAnnualIncome * 100) / netYieldBase : 0;
+
   const potentialSaleGain =
     projection.length > 0 ? projection[projection.length - 1].plusValue : 0;
+
   const globalBudget = price + works + notaryFees + agencyFees;
 
-  const netYieldColor = !showResults
-    ? 'text-gray-600'
-    : netYield >= 7
-    ? 'text-emerald-600'
-    : netYield >= 5.5
-    ? 'text-orange-600'
-    : 'text-red-600';
-  const decision = showResults
-    ? netYield >= 7
-      ? 'Favorable'
-      : netYield >= 5.5
-      ? 'A Approfondir'
-      : 'NOGO (sauf exception patrimoniale)'
-    : '-';
+  // ------------------ Décision & alerte loyer manquant ------------------
+  const rentIsZero = rent <= 0; // déjà consolidé pour immeuble/colocation
+  const decisionBase =
+    netYield >= 7 ? "Favorable" : netYield >= 5.5 ? "A Approfondir" : "NOGO (sauf exception patrimoniale)";
 
+  const decisionText =
+    showResults && rentIsZero
+      ? "Attention, vous avez oublié de renseigner les revenus locatifs !"
+      : showResults
+      ? decisionBase
+      : "-";
+
+  const decisionColor =
+    showResults && rentIsZero
+      ? "text-red-600"
+      : !showResults
+      ? "text-gray-600"
+      : netYield >= 7
+      ? "text-emerald-600"
+      : netYield >= 5.5
+      ? "text-orange-600"
+      : "text-red-600";
+
+  // ------------------ Handlers ------------------
+  function handleCalculate() {
+    // Si loyer = 0, on peut quand même calculer (pour le reste), mais la décision sera l’alerte rouge
+    const data = buildRealEstateProjection({
+      price,
+      contribution,
+      duration,
+      rate,
+      rent,
+      charges,
+      tax,
+      insurance,
+      works,
+      cfe,
+      pnoInsurance,
+      accountingFees,
+      managementFees,
+      rentGrowth,
+      vacancyWeeks: vacancy,
+      propertyGrowthRate,
+      sellYear,
+      agencyFees,
+      notaryFees,
+    });
+    setProjection(data);
+    setShowResults(true);
+  }
+
+  const handleCityChange = async (value: string) => {
+    setCity(value);
+    if (value.length < 2) {
+      setCitySuggestions([]);
+      return;
+    }
+    try {
+      const results = await fetchCities(value);
+      setCitySuggestions(results);
+    } catch {
+      setCitySuggestions([]);
+    }
+  };
+
+  const handleCitySelect = (suggestion: CitySuggestion) => {
+    setCity(`${suggestion.codePostal} ${suggestion.nom}`);
+    setCitySuggestions([]);
+  };
+
+  const handleLotCountChange = (value: number) => {
+    const count = Math.max(1, value);
+    setLotCount(count);
+    const newRents = [...lotRents];
+    if (newRents.length < count) newRents.push(...Array(count - newRents.length).fill(0));
+    else newRents.splice(count);
+    setLotRents(newRents);
+    setRent(newRents.reduce((sum, r) => sum + r, 0));
+  };
+
+  const handleLotRentChange = (index: number, value: number) => {
+    const newRents = [...lotRents];
+    newRents[index] = value;
+    setLotRents(newRents);
+    setRent(newRents.reduce((sum, r) => sum + r, 0));
+  };
+
+  const handleRoomCountChange = (value: number) => {
+    const count = Math.max(1, value);
+    setRoomCount(count);
+    const newRents = [...roomRents];
+    if (newRents.length < count) newRents.push(...Array(count - newRents.length).fill(0));
+    else newRents.splice(count);
+    setRoomRents(newRents);
+    setRent(newRents.reduce((sum, r) => sum + r, 0));
+  };
+
+  const handleRoomRentChange = (index: number, value: number) => {
+    const newRents = [...roomRents];
+    newRents[index] = value;
+    setRoomRents(newRents);
+    setRent(newRents.reduce((sum, r) => sum + r, 0));
+  };
+
+  // Payload pour enregistrer
+  function buildPayload() {
+    return {
+      meta: {
+        city,
+        propertyType,
+        createdAt: new Date().toISOString(),
+      },
+      inputs: {
+        price,
+        contribution,
+        duration,
+        rate,
+        rent,
+        lotCount,
+        lotRents,
+        roomCount,
+        roomRents,
+        charges,
+        tax,
+        insurance,
+        works,
+        cfe,
+        pnoInsurance,
+        accountingFees,
+        managementFees,
+        rentGrowth,
+        vacancyWeeks: vacancy,
+        propertyGrowthRate,
+        sellYear,
+        agencyFees,
+        notaryFees,
+      },
+      computed: {
+        financingNeed,
+        loanAmount,
+        monthlyPayment,
+        monthlyCashflow,
+        grossYield,
+        netAnnualIncome,
+        netYieldBase,
+        netYield,
+        potentialSaleGain,
+        globalBudget,
+      },
+      projection,
+    };
+  }
+
+  // Create
+  async function saveSimulation() {
+    try {
+      if (!token) {
+        if (onNavigate) onNavigate("login", { nextPage: "projet-immo" });
+        else alert("Connectez-vous pour enregistrer votre simulation.");
+        return;
+      }
+      setSaveErr(null);
+      setSaveOk(false);
+      setSaving(true);
+
+      const body = {
+        title: title && title.trim().length > 0 ? title.trim() : `Projet du ${new Date().toLocaleDateString()}`,
+        payload: buildPayload(),
+      };
+
+      await af("/api/simulations", { method: "POST", body: JSON.stringify(body) });
+      setSaveOk(true);
+      if (onNavigate) onNavigate("simulations");
+    } catch (e: any) {
+      setSaveErr(e?.message || "Erreur lors de l’enregistrement");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  // Save as (duplique)
+  async function saveAs() {
+    try {
+      if (!token) {
+        if (onNavigate) onNavigate("login", { nextPage: "projet-immo" });
+        else alert("Connectez-vous pour enregistrer.");
+        return;
+      }
+      setSaveErr(null);
+      setSaveOk(false);
+      setSaveAsLoading(true);
+
+      const body = {
+        title:
+          title && title.trim().length > 0
+            ? title.trim()
+            : `Copie du ${new Date().toLocaleDateString()}`,
+        payload: buildPayload(),
+      };
+
+      await af("/api/simulations", { method: "POST", body: JSON.stringify(body) });
+      setSaveOk(true);
+      if (onNavigate) onNavigate("simulations");
+    } catch (e: any) {
+      setSaveErr(e?.message || "Erreur lors de l’enregistrement (copie)");
+    } finally {
+      setSaveAsLoading(false);
+    }
+  }
+
+  // ------------------ Tooltip ------------------
   interface TooltipPayload {
     color: string;
     name: string;
     value: number;
   }
-
   const CustomTooltip = ({
     active,
     payload,
@@ -258,28 +410,67 @@ const RealEstateProjection: React.FC = () => {
     return null;
   };
 
+  // ------------------ Rendu ------------------
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         <div className="text-center">
-          <div className="flex items-center justify-center mb-4">
+          <div className="flex items-center justify-center mb-2">
             <HomeIcon className="h-12 w-12 text-primary-600" />
           </div>
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-900">
             Projet Immobilier
           </h1>
-          <p className="text-lg text-gray-600">
+
+          {/* Zone titre + actions (mise en évidence haut de page) */}
+          <div className="mt-4 flex flex-col md:flex-row items-center justify-center gap-2">
+            <input
+              className="border rounded px-3 py-2 w-full md:w-80"
+              placeholder="Titre du projet (ex: F2 centre ville)"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              title="Titre de la simulation"
+            />
+            <button
+              onClick={saveSimulation}
+              disabled={saving}
+              className={`px-4 py-2 rounded text-white ${
+                saving ? "bg-gray-400" : "bg-black hover:bg-gray-800"
+              }`}
+              title={token ? "Enregistrer cette simulation" : "Connectez-vous pour enregistrer"}
+            >
+              {saving ? "Enregistrement…" : "Enregistrer"}
+            </button>
+            <button
+              onClick={saveAs}
+              disabled={saveAsLoading}
+              className={`px-4 py-2 rounded border ${
+                saveAsLoading ? "opacity-60" : "hover:bg-gray-50"
+              }`}
+              title={token ? "Enregistrer sous (dupliquer)" : "Connectez-vous pour enregistrer"}
+            >
+              {saveAsLoading ? "Duplication…" : "Enregistrer sous"}
+            </button>
+          </div>
+
+          {saveErr && <p className="text-red-600 mt-2">{saveErr}</p>}
+          {saveOk && <p className="text-green-600 mt-2">Simulation enregistrée ✅</p>}
+
+          <p className="text-lg text-gray-600 mt-6">
             Simulez un investissement locatif et visualisez sa rentabilité.
           </p>
         </div>
 
         <div className="grid lg:grid-cols-2 gap-8">
+          {/* Colonne paramètres */}
           <div className="bg-white p-8 rounded-xl shadow-lg space-y-6">
             <h2 className="text-2xl font-semibold text-gray-900 flex items-center">
               <BarChart className="h-6 w-6 mr-2 text-primary-600" />
               Paramètres
             </h2>
+
             <div className="grid grid-cols-3 gap-4">
+              {/* Ville */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Ville
@@ -306,6 +497,8 @@ const RealEstateProjection: React.FC = () => {
                   )}
                 </div>
               </div>
+
+              {/* Prix */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Prix du bien (hors FAI)
@@ -320,6 +513,8 @@ const RealEstateProjection: React.FC = () => {
                   <span className="absolute right-3 top-2 text-gray-500">€</span>
                 </div>
               </div>
+
+              {/* Frais d'agence */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Frais d'agence
@@ -334,6 +529,8 @@ const RealEstateProjection: React.FC = () => {
                   <span className="absolute right-3 top-2 text-gray-500">€</span>
                 </div>
               </div>
+
+              {/* Travaux */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Travaux (total)
@@ -348,6 +545,8 @@ const RealEstateProjection: React.FC = () => {
                   <span className="absolute right-3 top-2 text-gray-500">€</span>
                 </div>
               </div>
+
+              {/* Notaire */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Frais de notaire
@@ -363,6 +562,8 @@ const RealEstateProjection: React.FC = () => {
                   <span className="absolute right-3 top-2 text-gray-500">€</span>
                 </div>
               </div>
+
+              {/* Apport */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Apport personnel
@@ -377,35 +578,44 @@ const RealEstateProjection: React.FC = () => {
                   <span className="absolute right-3 top-2 text-gray-500">€</span>
                 </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Durée du prêt
-                </label>
-                <input
-                  type="range"
-                  min="5"
-                  max="30"
-                  value={duration}
-                  onChange={(e) => setDuration(Number(e.target.value))}
-                  className="w-full"
-                />
-                <p className="text-sm text-gray-500 mt-1">{duration} ans</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Taux du prêt
-                </label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    value={rate}
-                    onChange={(e) => setRate(Number(e.target.value))}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                    step="0.1"
-                  />
-                  <span className="absolute right-3 top-2 text-gray-500">%</span>
-                </div>
-              </div>
+
+              {/* Durée + Taux → masqués si besoin = 0 */}
+              {financingNeed > 0 && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Durée du prêt
+                    </label>
+                    <input
+                      type="range"
+                      min="5"
+                      max="30"
+                      value={duration}
+                      onChange={(e) => setDuration(Number(e.target.value))}
+                      className="w-full"
+                    />
+                    <p className="text-sm text-gray-500 mt-1">{duration} ans</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Taux du prêt
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        value={rate}
+                        onChange={(e) => setRate(Number(e.target.value))}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                        step="0.1"
+                      />
+                      <span className="absolute right-3 top-2 text-gray-500">%</span>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Type de bien + loyers */}
               <div className="col-span-3 space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -415,7 +625,7 @@ const RealEstateProjection: React.FC = () => {
                     value={propertyType}
                     onChange={(e) =>
                       setPropertyType(
-                        e.target.value as 'appartement' | 'immeuble' | 'colocation'
+                        e.target.value as "appartement" | "immeuble" | "colocation"
                       )
                     }
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg"
@@ -425,7 +635,8 @@ const RealEstateProjection: React.FC = () => {
                     <option value="colocation">Colocation</option>
                   </select>
                 </div>
-                {propertyType === 'appartement' && (
+
+                {propertyType === "appartement" && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Loyer mensuel attendu
@@ -441,7 +652,8 @@ const RealEstateProjection: React.FC = () => {
                     </div>
                   </div>
                 )}
-                {propertyType === 'immeuble' && (
+
+                {propertyType === "immeuble" && (
                   <>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -449,12 +661,13 @@ const RealEstateProjection: React.FC = () => {
                       </label>
                       <input
                         type="number"
-                        min="1"
+                        min={1}
                         value={lotCount}
                         onChange={(e) => handleLotCountChange(Number(e.target.value))}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg"
                       />
                     </div>
+
                     {lotRents.map((lotRent, index) => (
                       <div key={index} className="flex items-center space-x-2">
                         <label className="text-sm font-medium text-gray-700">
@@ -464,15 +677,14 @@ const RealEstateProjection: React.FC = () => {
                           <input
                             type="number"
                             value={lotRent}
-                            onChange={(e) =>
-                              handleLotRentChange(index, Number(e.target.value))
-                            }
+                            onChange={(e) => handleLotRentChange(index, Number(e.target.value))}
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg"
                           />
                           <span className="absolute right-3 top-2 text-gray-500">€</span>
                         </div>
                       </div>
                     ))}
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Loyer mensuel total
@@ -489,7 +701,8 @@ const RealEstateProjection: React.FC = () => {
                     </div>
                   </>
                 )}
-                {propertyType === 'colocation' && (
+
+                {propertyType === "colocation" && (
                   <>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -497,14 +710,13 @@ const RealEstateProjection: React.FC = () => {
                       </label>
                       <input
                         type="number"
-                        min="1"
+                        min={1}
                         value={roomCount}
-                        onChange={(e) =>
-                          handleRoomCountChange(Number(e.target.value))
-                        }
+                        onChange={(e) => handleRoomCountChange(Number(e.target.value))}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg"
                       />
                     </div>
+
                     {roomRents.map((roomRent, index) => (
                       <div key={index} className="flex items-center space-x-2">
                         <label className="text-sm font-medium text-gray-700">
@@ -514,15 +726,14 @@ const RealEstateProjection: React.FC = () => {
                           <input
                             type="number"
                             value={roomRent}
-                            onChange={(e) =>
-                              handleRoomRentChange(index, Number(e.target.value))
-                            }
+                            onChange={(e) => handleRoomRentChange(index, Number(e.target.value))}
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg"
                           />
                           <span className="absolute right-3 top-2 text-gray-500">€</span>
                         </div>
                       </div>
                     ))}
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Loyer mensuel total
@@ -540,6 +751,8 @@ const RealEstateProjection: React.FC = () => {
                   </>
                 )}
               </div>
+
+              {/* curseurs */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Augmentation annuelle du loyer
@@ -555,6 +768,7 @@ const RealEstateProjection: React.FC = () => {
                 />
                 <p className="text-sm text-gray-500 mt-1">{rentGrowth}%</p>
               </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Appréciation annuelle du bien
@@ -570,6 +784,8 @@ const RealEstateProjection: React.FC = () => {
                 />
                 <p className="text-sm text-gray-500 mt-1">{propertyGrowthRate}%</p>
               </div>
+
+              {/* Charges & co */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Charges mensuelles
@@ -584,6 +800,7 @@ const RealEstateProjection: React.FC = () => {
                   <span className="absolute right-3 top-2 text-gray-500">€</span>
                 </div>
               </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Taxe foncière annuelle
@@ -598,6 +815,7 @@ const RealEstateProjection: React.FC = () => {
                   <span className="absolute right-3 top-2 text-gray-500">€</span>
                 </div>
               </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Assurance mensuelle
@@ -612,6 +830,7 @@ const RealEstateProjection: React.FC = () => {
                   <span className="absolute right-3 top-2 text-gray-500">€</span>
                 </div>
               </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   CFE annuelle
@@ -626,6 +845,7 @@ const RealEstateProjection: React.FC = () => {
                   <span className="absolute right-3 top-2 text-gray-500">€</span>
                 </div>
               </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Assurance PNO annuelle
@@ -640,6 +860,7 @@ const RealEstateProjection: React.FC = () => {
                   <span className="absolute right-3 top-2 text-gray-500">€</span>
                 </div>
               </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Expert comptable annuel
@@ -654,6 +875,7 @@ const RealEstateProjection: React.FC = () => {
                   <span className="absolute right-3 top-2 text-gray-500">€</span>
                 </div>
               </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Gestion locative mensuelle
@@ -668,6 +890,7 @@ const RealEstateProjection: React.FC = () => {
                   <span className="absolute right-3 top-2 text-gray-500">€</span>
                 </div>
               </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Vacance (semaines/an)
@@ -682,13 +905,14 @@ const RealEstateProjection: React.FC = () => {
                 />
                 <p className="text-sm text-gray-500 mt-1">{vacancy} semaines</p>
               </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Année de revente
                 </label>
                 <input
                   type="range"
-                  min="1"
+                  min={1}
                   max={30}
                   value={sellYear}
                   onChange={(e) => setSellYear(Number(e.target.value))}
@@ -697,6 +921,7 @@ const RealEstateProjection: React.FC = () => {
                 <p className="text-sm text-gray-500 mt-1">{sellYear} ans</p>
               </div>
             </div>
+
             <button
               onClick={handleCalculate}
               className="w-full bg-accent-600 text-white py-3 rounded-lg hover:bg-accent-700"
@@ -705,11 +930,13 @@ const RealEstateProjection: React.FC = () => {
             </button>
           </div>
 
+          {/* Colonne résultats */}
           <div className="space-y-6">
             <h2 className="text-2xl font-semibold text-gray-900 flex items-center">
               <BarChart className="h-6 w-6 mr-2 text-primary-600" />
               Projection
             </h2>
+
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-white p-6 rounded-xl shadow-lg">
                 <h3 className="text-sm font-medium text-gray-500 mb-2">Budget global</h3>
@@ -717,18 +944,21 @@ const RealEstateProjection: React.FC = () => {
                   {formatCurrency(globalBudget)}
                 </p>
               </div>
+
               <div className="bg-white p-6 rounded-xl shadow-lg">
                 <h3 className="text-sm font-medium text-gray-500 mb-2">Besoin en financement</h3>
                 <p className="text-2xl font-bold text-primary-600">
                   {formatCurrency(financingNeed)}
                 </p>
               </div>
+
               <div className="bg-white p-6 rounded-xl shadow-lg">
                 <h3 className="text-sm font-medium text-gray-500 mb-2">Mensualité</h3>
                 <p className="text-2xl font-bold text-primary-600">
                   {formatCurrency(monthlyPayment)}
                 </p>
               </div>
+
               <div className="bg-white p-6 rounded-xl shadow-lg">
                 <h3 className="text-sm font-medium text-gray-500 mb-2">Cashflow mensuel</h3>
                 <p className="text-2xl font-bold text-emerald-600">
@@ -736,6 +966,7 @@ const RealEstateProjection: React.FC = () => {
                 </p>
               </div>
             </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-white p-6 rounded-xl shadow-lg text-center">
                 <p className="text-sm text-gray-500">Rendement brut</p>
@@ -743,46 +974,83 @@ const RealEstateProjection: React.FC = () => {
               </div>
               <div className="bg-white p-6 rounded-xl shadow-lg text-center">
                 <p className="text-sm text-gray-500">Rendement net</p>
-                <p className={`text-xl font-semibold ${netYieldColor}`}>{netYield.toFixed(2)}%</p>
+                <p className={`text-xl font-semibold ${decisionColor}`}>{netYield.toFixed(2)}%</p>
               </div>
               <div className="bg-white p-6 rounded-xl shadow-lg text-center col-span-2">
                 <p className="text-sm text-gray-500">Décision</p>
-                <p className={`text-xl font-semibold ${netYieldColor}`}>{decision}</p>
+                <p className={`text-xl font-semibold ${decisionColor}`}>{decisionText}</p>
               </div>
             </div>
+
             {showResults ? (
               <>
                 <div className="bg-white p-6 rounded-xl shadow-lg text-center">
-                  <p className="text-sm text-gray-500">Plus-value potentielle à l’année {sellYear}</p>
+                  <p className="text-sm text-gray-500">
+                    Plus-value potentielle à l’année {sellYear}
+                  </p>
                   <p className="text-xl font-semibold">{formatCurrency(potentialSaleGain)}</p>
                 </div>
+
                 <div className="bg-white p-6 rounded-xl shadow-lg">
                   <div className="h-96">
                     <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={projection} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                      <LineChart
+                        data={projection}
+                        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                      >
                         <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                        <XAxis dataKey="year" tick={{ fontSize: 12 }} label={{ value: 'Années', position: 'insideBottom', offset: -10 }} />
-                        <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k€`} />
+                        <XAxis
+                          dataKey="year"
+                          tick={{ fontSize: 12 }}
+                          label={{ value: "Années", position: "insideBottom", offset: -10 }}
+                        />
+                        <YAxis
+                          tick={{ fontSize: 12 }}
+                          tickFormatter={(v) => `${(v / 1000).toFixed(0)}k€`}
+                        />
                         <Tooltip content={<CustomTooltip />} />
                         <Legend />
-                        <Line type="monotone" dataKey="repaidPrincipal" stroke="#3b82f6" name="Capital remboursé" strokeWidth={3} />
-                        <Line type="monotone" dataKey="cumulativeCashflow" stroke="#10b981" name="Cashflow cumulé" strokeWidth={3} />
-                        <Line type="monotone" dataKey="enrichissement" stroke="#f59e0b" name="Enrichissement" strokeWidth={3} />
+                        <Line
+                          type="monotone"
+                          dataKey="repaidPrincipal"
+                          stroke="#3b82f6"
+                          name="Capital remboursé"
+                          strokeWidth={3}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="cumulativeCashflow"
+                          stroke="#10b981"
+                          name="Cashflow cumulé"
+                          strokeWidth={3}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="enrichissement"
+                          stroke="#f59e0b"
+                          name="Enrichissement"
+                          strokeWidth={3}
+                        />
                       </LineChart>
                     </ResponsiveContainer>
                   </div>
                 </div>
-                <button
-                  onClick={() => window.print()}
-                  className="w-full bg-primary-600 text-white py-3 rounded-lg hover:bg-primary-700"
-                >
-                  Enregistrer en PDF
-                </button>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={() => window.print()}
+                    className="w-full bg-primary-600 text-white py-3 rounded-lg hover:bg-primary-700"
+                  >
+                    Enregistrer en PDF
+                  </button>
+                </div>
               </>
             ) : (
               <div className="bg-white p-12 rounded-xl shadow-lg text-center">
                 <HomeIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500">Remplissez le formulaire pour voir la projection</p>
+                <p className="text-gray-500">
+                  Remplissez le formulaire pour voir la projection
+                </p>
               </div>
             )}
           </div>
@@ -790,7 +1058,4 @@ const RealEstateProjection: React.FC = () => {
       </div>
     </div>
   );
-};
-
-export default RealEstateProjection;
-
+}
