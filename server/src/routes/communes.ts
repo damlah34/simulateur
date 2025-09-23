@@ -15,7 +15,7 @@ router.get('/search', limiter, async (req, res) => {
   try {
     const data = await searchCommunes(parsed.data.q);
     res.json(data);
-  } catch (e) {
+  } catch {
     res.status(502).json({ error: 'API communes indisponible' });
   }
 });

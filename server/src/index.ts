@@ -6,6 +6,7 @@ import cors from "cors";
 import communes from "./routes/communes";
 import auth from "./routes/auth";
 import simulations from "./routes/simulations";
+import users from "./routes/users";
 
 const app = express();
 
@@ -16,6 +17,7 @@ app.use(express.json());
 app.use("/api/communes", communes);
 app.use("/api/auth", auth);
 app.use("/api/simulations", simulations);
+app.use("/api/users", users);
 
 const port = process.env.PORT || 4000;
 app.listen(port, () => {
