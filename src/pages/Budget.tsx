@@ -3,7 +3,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import Papa from "papaparse";
 import { useAuth } from "../contexts/AuthContext";
 
-type Props = { onNavigate: (page: string) => void };
+type Props = { onNavigate: (page: string, params?: any) => void };
 
 type ParsedRow = { date: string; label: string; amount: number; account?: string | null };
 type SummaryItem = { ym: string; category: string; income: number; expense: number; net: number };

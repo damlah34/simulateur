@@ -95,7 +95,7 @@ export default function Login({ onNavigate }: Props) {
         <button type="button" className="underline" onClick={() => onNavigate("signup")}>
           Créer un compte
         </button>
-        <button type="button" className="underline" onClick={() => onNavigate("home", { forgot: true })}>
+        <button type="button" className="underline" onClick={() => onNavigate("forgot-password")}>
           Mot de passe oublié ?
         </button>
       </div>
