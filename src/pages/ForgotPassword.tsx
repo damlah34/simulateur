@@ -1,15 +1,13 @@
 // src/pages/ForgotPassword.tsx
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { authFetch } from '../utils/authFetch';
 
 export default function ForgotPassword({
   onNavigate,
 }: {
   onNavigate: (page: string, params?: any) => void;
 }) {
-  const { token } = useAuth(); // pas nécessaire ici mais dispo
-  const af = authFetch(token);
+  const { authFetch } = useAuth();
   const [email, setEmail] = useState('');
   const [ok, setOk] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -21,10 +19,14 @@ export default function ForgotPassword({
     setOk(false);
     setLoading(true);
     try {
-      await af('/api/auth/forgot', {
+      const res = await authFetch('/api/auth/forgot', {
         method: 'POST',
         body: JSON.stringify({ email }),
       });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error((data as any)?.error || `HTTP ${res.status}`);
+      }
       setOk(true);
     } catch (e: any) {
       setErr(e?.message || 'Impossible d’envoyer l’email.');
