@@ -109,10 +109,28 @@ function parseLdJsonBlocks(html: string): unknown[] {
 }
 
 function recoverJsonObjects(raw: string): unknown[] {
-  const cleaned = raw
-    .replace(/^[^{\[]+/, '')
-    .replace(/[^}\]]+$/, '');
+  const firstBrace = raw.indexOf('{');
+  const firstBracket = raw.indexOf('[');
+  const startCandidates = [firstBrace, firstBracket].filter((idx) => idx >= 0);
+  if (startCandidates.length === 0) {
+    return [];
+  }
 
+  const startIndex = Math.min(...startCandidates);
+
+  const lastBrace = raw.lastIndexOf('}');
+  const lastBracket = raw.lastIndexOf(']');
+  const endCandidates = [lastBrace, lastBracket].filter((idx) => idx >= 0);
+  if (endCandidates.length === 0) {
+    return [];
+  }
+
+  const endIndex = Math.max(...endCandidates);
+  if (endIndex < startIndex) {
+    return [];
+  }
+
+  const cleaned = raw.slice(startIndex, endIndex + 1).trim();
   if (!cleaned) {
     return [];
   }

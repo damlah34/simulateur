@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { TrendingUp } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 
@@ -23,6 +23,24 @@ const NAV_ITEMS: NavItem[] = [
 
 export default function Header({ currentPage, onNavigate }: HeaderProps) {
   const { token, user, logout } = useAuth();
+
+  const formattedBuildTime = useMemo(() => {
+    if (typeof __BUILD_TIME__ !== "string") {
+      return null;
+    }
+    const date = new Date(__BUILD_TIME__);
+    if (Number.isNaN(date.getTime())) {
+      return null;
+    }
+    try {
+      return new Intl.DateTimeFormat("fr-FR", {
+        dateStyle: "short",
+        timeStyle: "short",
+      }).format(date);
+    } catch {
+      return date.toLocaleString("fr-FR");
+    }
+  }, []);
 
   const renderNavButton = (item: NavItem) => {
     if (item.requiresAuth && !token) {
@@ -52,7 +70,14 @@ export default function Header({ currentPage, onNavigate }: HeaderProps) {
           onClick={() => onNavigate("home")}
         >
           <TrendingUp className="h-6 w-6" />
-          <span className="text-lg font-semibold">Focus Patrimoine</span>
+          <div className="flex flex-col leading-tight">
+            <span className="text-lg font-semibold">Focus Patrimoine</span>
+            {formattedBuildTime && (
+              <span className="text-[11px] text-gray-500">
+                Dernière compilation : {formattedBuildTime}
+              </span>
+            )}
+          </div>
         </div>
 
         <nav className="flex flex-wrap items-center gap-2 justify-start md:justify-center">
