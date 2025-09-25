@@ -1,5 +1,5 @@
 // src/components/RealEstateProjection.tsx
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Home as HomeIcon, BarChart } from "lucide-react";
 import {
   LineChart,
@@ -24,6 +24,47 @@ import { useAuth } from "../contexts/AuthContext";
 
 type Props = {
   onNavigate?: (page: string, params?: any) => void;
+};
+
+type InputsPayload = {
+  price?: number;
+  contribution?: number;
+  duration?: number;
+  rate?: number;
+  rent?: number;
+  lotCount?: number;
+  lotRents?: number[];
+  roomCount?: number;
+  roomRents?: number[];
+  charges?: number;
+  tax?: number;
+  insurance?: number;
+  works?: number;
+  cfe?: number;
+  pnoInsurance?: number;
+  accountingFees?: number;
+  managementFees?: number;
+  rentGrowth?: number;
+  vacancyWeeks?: number;
+  propertyGrowthRate?: number;
+  sellYear?: number;
+  agencyFees?: number;
+  notaryFees?: number;
+};
+
+type StoredSimulationPayload = {
+  meta?: {
+    city?: string;
+    propertyType?: "appartement" | "immeuble" | "colocation";
+  };
+  inputs?: InputsPayload;
+  projection?: RealEstateYearData[];
+};
+
+type SimulationResponse = {
+  id: string;
+  title?: string;
+  payload?: StoredSimulationPayload | null;
 };
 
 export default function RealEstateProjection({ onNavigate }: Props) {
@@ -73,14 +114,173 @@ export default function RealEstateProjection({ onNavigate }: Props) {
   const [saveOk, setSaveOk] = useState(false);
   const [saveAsLoading, setSaveAsLoading] = useState(false);
   const { token, authFetch: af } = useAuth();
+  const [currentSimulationId, setCurrentSimulationId] = useState<string | null>(null);
+  const [loadingSimulation, setLoadingSimulation] = useState(false);
+  const [loadSimulationError, setLoadSimulationError] = useState<string | null>(null);
+  const hydrationGuardRef = useRef(false);
+  const hydrationTimerRef = useRef<number | null>(null);
+  const pendingSimulationIdRef = useRef<string | null>(null);
+  const pendingSimulationTitleRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (hydrationTimerRef.current !== null) {
+        window.clearTimeout(hydrationTimerRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    const params = window.__pageParams;
+    if (params && typeof params === "object" && "simulationId" in params) {
+      const simId = (params as any).simulationId as string | undefined;
+      const simTitle = (params as any).title as string | undefined;
+      if (simId) {
+        pendingSimulationIdRef.current = simId;
+        pendingSimulationTitleRef.current = simTitle ?? null;
+        if (simTitle && simTitle.trim().length > 0) {
+          setTitle(simTitle.trim());
+        }
+      }
+    } else {
+      pendingSimulationIdRef.current = null;
+      pendingSimulationTitleRef.current = null;
+      setCurrentSimulationId(null);
+    }
+    window.__pageParams = null;
+  }, []);
+
+  useEffect(() => {
+    if (!token) return;
+    if (!pendingSimulationIdRef.current) return;
+
+    const id = pendingSimulationIdRef.current;
+    const titleHint = pendingSimulationTitleRef.current;
+    pendingSimulationIdRef.current = null;
+    pendingSimulationTitleRef.current = null;
+    loadSimulationById(id, titleHint || undefined);
+  }, [token]);
+
+  function releaseHydrationGuardSoon() {
+    if (hydrationTimerRef.current !== null) {
+      window.clearTimeout(hydrationTimerRef.current);
+    }
+    hydrationTimerRef.current = window.setTimeout(() => {
+      hydrationGuardRef.current = false;
+      hydrationTimerRef.current = null;
+    }, 0);
+  }
+
+  function applySimulationPayload(payload: StoredSimulationPayload | null, simulationTitle?: string | null) {
+    hydrationGuardRef.current = true;
+
+    const inputs = payload?.inputs ?? {};
+    const meta = payload?.meta ?? {};
+    const resolvedPropertyType = (meta.propertyType || inputs.propertyType || "appartement") as
+      | "appartement"
+      | "immeuble"
+      | "colocation";
+
+    const sanitizedLotRents =
+      Array.isArray(inputs.lotRents) && inputs.lotRents.length > 0
+        ? inputs.lotRents.map((value) => Number(value) || 0)
+        : [0];
+    const sanitizedRoomRents =
+      Array.isArray(inputs.roomRents) && inputs.roomRents.length > 0
+        ? inputs.roomRents.map((value) => Number(value) || 0)
+        : [0];
+
+    if (simulationTitle && simulationTitle.trim().length > 0) {
+      setTitle(simulationTitle.trim());
+    }
+    setCity(meta.city ?? "");
+    setPropertyType(resolvedPropertyType);
+    setPrice(inputs.price ?? 0);
+    setContribution(inputs.contribution ?? 0);
+    setDuration(inputs.duration ?? 20);
+    setRate(inputs.rate ?? 3);
+
+    if (resolvedPropertyType === "immeuble") {
+      setLotCount(inputs.lotCount ?? sanitizedLotRents.length);
+      setLotRents(sanitizedLotRents);
+      const computedRent = sanitizedLotRents.reduce((sum, value) => sum + (value || 0), 0);
+      setRent(inputs.rent ?? computedRent);
+      setRoomCount(0);
+      setRoomRents([0]);
+    } else if (resolvedPropertyType === "colocation") {
+      setRoomCount(inputs.roomCount ?? sanitizedRoomRents.length);
+      setRoomRents(sanitizedRoomRents);
+      const computedRent = sanitizedRoomRents.reduce((sum, value) => sum + (value || 0), 0);
+      setRent(inputs.rent ?? computedRent);
+      setLotCount(0);
+      setLotRents([0]);
+    } else {
+      setLotCount(0);
+      setLotRents([0]);
+      setRoomCount(0);
+      setRoomRents([0]);
+      setRent(inputs.rent ?? 0);
+    }
+
+    setCharges(inputs.charges ?? 0);
+    setTax(inputs.tax ?? 0);
+    setInsurance(inputs.insurance ?? 0);
+    setWorks(inputs.works ?? 0);
+    setCfe(inputs.cfe ?? 0);
+    setPnoInsurance(inputs.pnoInsurance ?? 0);
+    setAccountingFees(inputs.accountingFees ?? 0);
+    setManagementFees(inputs.managementFees ?? 0);
+    setRentGrowth(inputs.rentGrowth ?? 0);
+    setVacancy(inputs.vacancyWeeks ?? 0);
+    setPropertyGrowthRate(inputs.propertyGrowthRate ?? 0);
+    setSellYear(inputs.sellYear ?? 20);
+    setAgencyFees(inputs.agencyFees ?? 0);
+    setNotaryFees(inputs.notaryFees ?? calculateNotaryFees(inputs.price ?? 0));
+
+    if (payload?.projection && Array.isArray(payload.projection)) {
+      setProjection(payload.projection);
+      setShowResults(payload.projection.length > 0);
+    } else {
+      setProjection([]);
+      setShowResults(false);
+    }
+
+    setSaveErr(null);
+    setSaveOk(false);
+    releaseHydrationGuardSoon();
+  }
+
+  async function loadSimulationById(id: string, titleHint?: string) {
+    if (!token) return;
+
+    setLoadingSimulation(true);
+    setLoadSimulationError(null);
+    try {
+      const res = await af(`/api/simulations/${id}`);
+      const data = (await res.json().catch(() => ({}))) as SimulationResponse;
+      if (!res.ok) {
+        throw new Error((data as any)?.error || `HTTP ${res.status}`);
+      }
+
+      setCurrentSimulationId(data.id || id);
+      applySimulationPayload(data.payload ?? null, data.title ?? titleHint ?? null);
+    } catch (e: any) {
+      setCurrentSimulationId(null);
+      setLoadSimulationError(e?.message || "Impossible de charger la simulation.");
+    } finally {
+      setLoadingSimulation(false);
+    }
+  }
 
   // ------------------ Effets calculs de base ------------------
   useEffect(() => {
+    if (hydrationGuardRef.current) return;
     setNotaryFees(calculateNotaryFees(price));
   }, [price]);
 
   // Reset projection quand un input important change
   useEffect(() => {
+    if (hydrationGuardRef.current) return;
     setShowResults(false);
     setProjection([]);
   }, [
@@ -108,6 +308,8 @@ export default function RealEstateProjection({ onNavigate }: Props) {
 
   // Ajustements du type de bien
   useEffect(() => {
+    if (hydrationGuardRef.current) return;
+
     if (propertyType === "appartement") {
       setRent(0);
     } else if (propertyType === "immeuble") {
@@ -323,7 +525,7 @@ export default function RealEstateProjection({ onNavigate }: Props) {
     };
   }
 
-  // Create
+  // Create or update
   async function saveSimulation() {
     try {
       if (!token) {
@@ -340,7 +542,18 @@ export default function RealEstateProjection({ onNavigate }: Props) {
         payload: buildPayload(),
       };
 
-      await af("/api/simulations", { method: "POST", body: JSON.stringify(body) });
+      const endpoint = currentSimulationId ? `/api/simulations/${currentSimulationId}` : "/api/simulations";
+      const method = currentSimulationId ? "PUT" : "POST";
+      const res = await af(endpoint, { method, body: JSON.stringify(body) });
+      const data = (await res.json().catch(() => ({}))) as SimulationResponse;
+      if (!res.ok) {
+        throw new Error((data as any)?.error || `HTTP ${res.status}`);
+      }
+
+      if (!currentSimulationId && data.id) {
+        setCurrentSimulationId(data.id);
+      }
+      applySimulationPayload(data.payload ?? null, data.title ?? body.title);
       setSaveOk(true);
       if (onNavigate) onNavigate("simulations");
     } catch (e: any) {
@@ -370,7 +583,11 @@ export default function RealEstateProjection({ onNavigate }: Props) {
         payload: buildPayload(),
       };
 
-      await af("/api/simulations", { method: "POST", body: JSON.stringify(body) });
+      const res = await af("/api/simulations", { method: "POST", body: JSON.stringify(body) });
+      const data = (await res.json().catch(() => ({}))) as SimulationResponse;
+      if (!res.ok) {
+        throw new Error((data as any)?.error || `HTTP ${res.status}`);
+      }
       setSaveOk(true);
       if (onNavigate) onNavigate("simulations");
     } catch (e: any) {
@@ -453,6 +670,12 @@ export default function RealEstateProjection({ onNavigate }: Props) {
             </button>
           </div>
 
+          {loadingSimulation && (
+            <p className="text-sm text-gray-500 mt-2">Chargement de la simulation…</p>
+          )}
+          {loadSimulationError && (
+            <p className="text-red-600 mt-2">{loadSimulationError}</p>
+          )}
           {saveErr && <p className="text-red-600 mt-2">{saveErr}</p>}
           {saveOk && <p className="text-green-600 mt-2">Simulation enregistrée ✅</p>}
 
