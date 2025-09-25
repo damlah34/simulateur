@@ -1,6 +1,7 @@
-import React, { useMemo } from "react";
+import React from "react";
 import { TrendingUp } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
+import { useFormattedBuildTime } from "../hooks/useFormattedBuildTime";
 
 type HeaderProps = {
   currentPage: string;
@@ -23,24 +24,7 @@ const NAV_ITEMS: NavItem[] = [
 
 export default function Header({ currentPage, onNavigate }: HeaderProps) {
   const { token, user, logout } = useAuth();
-
-  const formattedBuildTime = useMemo(() => {
-    if (typeof __BUILD_TIME__ !== "string") {
-      return null;
-    }
-    const date = new Date(__BUILD_TIME__);
-    if (Number.isNaN(date.getTime())) {
-      return null;
-    }
-    try {
-      return new Intl.DateTimeFormat("fr-FR", {
-        dateStyle: "short",
-        timeStyle: "short",
-      }).format(date);
-    } catch {
-      return date.toLocaleString("fr-FR");
-    }
-  }, []);
+  const formattedBuildTime = useFormattedBuildTime();
 
   const renderNavButton = (item: NavItem) => {
     if (item.requiresAuth && !token) {

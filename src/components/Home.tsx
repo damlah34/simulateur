@@ -1,11 +1,14 @@
 import React from "react";
 import { TrendingUp, Calculator, Shield, Target, Home as HomeIcon } from "lucide-react";
+import { useBuildTimestampLabel } from "../hooks/useFormattedBuildTime";
 
 interface HomeProps {
   onNavigate: (page: string) => void;
 }
 
 const Home: React.FC<HomeProps> = ({ onNavigate }) => {
+  const buildTimestampLabel = useBuildTimestampLabel();
+
   const features = [
     {
       icon: Calculator,
@@ -54,6 +57,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
             <p className="text-gray-600 max-w-2xl mx-auto">
               Des outils simples et puissants pour optimiser vos investissements
             </p>
+            <p className="text-xs text-gray-500 mt-4">{buildTimestampLabel}</p>
           </div>
         </div>
       </section>
