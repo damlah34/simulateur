@@ -73,10 +73,7 @@ export default function Simulations({ onNavigate }: Props) {
   }
 
   function openSimulation(s: SimulationLite) {
-    // 👇 On place le param en mémoire globale pour que Projection Immo puisse le lire
-    (window as any).__app_params = { simulation: { id: s.id, title: s.title } };
-    // puis on navigue vers la page Projection Immo
-    onNavigate("projet-immo");
+    onNavigate("projet-immo", { simulationId: s.id, title: s.title });
   }
 
   return (
