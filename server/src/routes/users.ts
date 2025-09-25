@@ -103,47 +103,57 @@ router.post("/", requireUserAuth, requireAdmin, async (req, res) => {
   }
 });
 
-router.patch("/:id", requireUserAuth, requireAdmin, async (req, res) => {
-  try {
-    const body = updateSchema.parse(req.body);
-    const id = Number(req.params.id);
-    if (!Number.isFinite(id)) {
-      return res.status(400).json({ error: "Invalid user id" });
+router.patch(
+  "/:id",
+  requireUserAuth,
+  requireAdmin,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const body = updateSchema.parse(req.body);
+      const id = Number(req.params.id);
+      if (!Number.isFinite(id)) {
+        return res.status(400).json({ error: "Invalid user id" });
+      }
+      if (body.role && id === req.currentUser?.id) {
+        return res.status(400).json({ error: "You cannot change your own role" });
+      }
+      const updated = await updateUser(id, body, { allowRoleAssignment: true });
+      return res.json({ user: updated });
+    } catch (error: any) {
+      if (error instanceof UserServiceError && error.code === "NOT_FOUND") {
+        return res.status(404).json({ error: error.message });
+      }
+      if (error?.issues) {
+        return res.status(400).json({ error: "Invalid payload", details: error.issues });
+      }
+      return res.status(500).json({ error: error?.message ?? "Unexpected error" });
     }
-    if (body.role && id === req.currentUser?.id) {
-      return res.status(400).json({ error: "You cannot change your own role" });
-    }
-    const updated = await updateUser(id, body, { allowRoleAssignment: true });
-    return res.json({ user: updated });
-  } catch (error: any) {
-    if (error instanceof UserServiceError && error.code === "NOT_FOUND") {
-      return res.status(404).json({ error: error.message });
-    }
-    if (error?.issues) {
-      return res.status(400).json({ error: "Invalid payload", details: error.issues });
-    }
-    return res.status(500).json({ error: error?.message ?? "Unexpected error" });
   }
-});
+);
 
-router.delete("/:id", requireUserAuth, requireAdmin, async (req, res) => {
-  try {
-    const id = Number(req.params.id);
-    if (!Number.isFinite(id)) {
-      return res.status(400).json({ error: "Invalid user id" });
+router.delete(
+  "/:id",
+  requireUserAuth,
+  requireAdmin,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const id = Number(req.params.id);
+      if (!Number.isFinite(id)) {
+        return res.status(400).json({ error: "Invalid user id" });
+      }
+      if (req.currentUser?.id === id) {
+        return res.status(400).json({ error: "You cannot delete your own account" });
+      }
+      await deleteUser(id);
+      return res.status(204).send();
+    } catch (error: any) {
+      if (error instanceof UserServiceError && error.code === "NOT_FOUND") {
+        return res.status(404).json({ error: error.message });
+      }
+      return res.status(500).json({ error: error?.message ?? "Unexpected error" });
     }
-    if (req.currentUser?.id === id) {
-      return res.status(400).json({ error: "You cannot delete your own account" });
-    }
-    await deleteUser(id);
-    return res.status(204).send();
-  } catch (error: any) {
-    if (error instanceof UserServiceError && error.code === "NOT_FOUND") {
-      return res.status(404).json({ error: error.message });
-    }
-    return res.status(500).json({ error: error?.message ?? "Unexpected error" });
   }
-});
+);
 
 router.get("/:id", requireUserAuth, requireAdmin, async (req, res) => {
   try {
