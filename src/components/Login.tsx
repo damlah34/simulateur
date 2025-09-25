@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../contexts/AuthContext';
 
 interface LoginProps {
   onSuccess: () => void;
 }
 
 const Login: React.FC<LoginProps> = ({ onSuccess }) => {
-  const { login, register, error, loading } = useAuth();
+  const { login, signup, error, loading } = useAuth();
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -22,9 +22,15 @@ const Login: React.FC<LoginProps> = ({ onSuccess }) => {
         setFeedback(null);
         onSuccess();
       } else {
-        await register({ email, password, fullName: fullName || undefined });
-        setFeedback("Compte créé avec succès ! Vous êtes maintenant connecté.");
-        onSuccess();
+        const result = await signup(email, password, fullName || undefined);
+        if (result === 'ok') {
+          setFeedback("Compte créé avec succès ! Vous êtes maintenant connecté.");
+          onSuccess();
+        } else {
+          setFeedback(
+            "Compte créé ! Vérifiez votre boîte mail pour confirmer votre adresse avant de vous connecter.",
+          );
+        }
       }
     } catch (err: any) {
       setFeedback(err?.message ?? "Une erreur est survenue");
