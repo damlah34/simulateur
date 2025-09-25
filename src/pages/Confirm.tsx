@@ -1,7 +1,7 @@
 // src/pages/Confirm.tsx
 import React from "react";
 
-export default function Confirm({ onNavigate }: { onNavigate: (p: string) => void }) {
+export default function Confirm({ onNavigate }: { onNavigate: (p: string, params?: any) => void }) {
   return (
     <div className="min-h-[60vh] flex items-center justify-center px-4">
       <div className="bg-white p-6 rounded-xl shadow max-w-md text-center space-y-4">

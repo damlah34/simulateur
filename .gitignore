@@ -13,6 +13,7 @@ client/dist/
 # Environnements
 .env
 .env.*        # ignore .env.local, .env.development, etc.
+/.env.local   # ensure the root example stays private even if added once
 server/.env
 server/.env.*
 client/.env
