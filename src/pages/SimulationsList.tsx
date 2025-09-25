@@ -1,7 +1,6 @@
 // src/pages/SimulationsList.tsx
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { authFetch } from '../utils/authFetch';
 
 type Simulation = {
   id: string;
@@ -17,8 +16,7 @@ export default function SimulationsList({
   onOpen: (id: string) => void;
   onNavigate: (page: string, params?: any) => void;
 }) {
-  const { token } = useAuth();
-  const af = authFetch(token);
+  const { token, authFetch } = useAuth();
 
   const [items, setItems] = useState<Simulation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -29,7 +27,11 @@ export default function SimulationsList({
     try {
       setErr(null);
       setLoading(true);
-      const data = await af('/api/simulations'); // GET liste de l'utilisateur
+      const res = await authFetch('/api/simulations');
+      const data = await res.json().catch(() => []);
+      if (!res.ok) {
+        throw new Error((data as any)?.error || `HTTP ${res.status}`);
+      }
       setItems(data || []);
       setLoading(false);
     } catch (e: any) {
@@ -51,9 +53,12 @@ export default function SimulationsList({
     if (!confirm('Supprimer cette simulation ?')) return;
     try {
       setDeletingId(id);
-      await af(`/api/simulations/${id}`, { method: 'DELETE' });
+      const res = await authFetch(`/api/simulations/${id}`, { method: 'DELETE' });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error((data as any)?.error || `HTTP ${res.status}`);
+      }
       setDeletingId(null);
-      // rafraîchir la liste localement (sans recharger toute la page)
       setItems((prev) => prev.filter((x) => x.id !== id));
     } catch (e: any) {
       setDeletingId(null);
@@ -122,7 +127,7 @@ export default function SimulationsList({
               <div className="flex gap-2">
                 <button
                   className="px-3 py-2 border rounded hover:bg-gray-50"
-                  onClick={() => onOpen(s.id)} // 👈 ouvre en Projection immo
+                  onClick={() => onOpen(s.id)}
                   title="Ouvrir et éditer"
                 >
                   Ouvrir
