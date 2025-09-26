@@ -21,6 +21,8 @@ npm run lint
 npm run build
 ```
 
+> ℹ️ La ligne « Dernière mise à jour » affichée sous le titre *Focus Patrimoine* est générée au moment du build. Si vous ne voyez pas l'horodatage après avoir récupéré une nouvelle version, relancez `npm run build` pour régénérer les fichiers statiques.
+
 ### 2. Configure environment variables
 
 Copy `.env.example` to `.env.local` at the project root and only keep it on your machine:
@@ -44,6 +46,12 @@ Start the React development server:
 
 ```bash
 npm run dev
+```
+
+To inspect the production build locally (et vérifier l'horodatage affiché dans l'entête), exécutez ensuite :
+
+```bash
+npm run preview
 ```
 
 Start the Node API from the `server/` folder in a separate terminal once the environment variables are in place:
