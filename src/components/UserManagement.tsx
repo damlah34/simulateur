@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../contexts/AuthContext';
 import type { AppUser, UserRole } from '../types/user';
 import { createUser, deleteUser, fetchUsers, updateUser } from '../utils/api';
 
@@ -18,21 +18,21 @@ const defaultFormState: FormState = {
 };
 
 const UserManagement: React.FC = () => {
-  const { token, user } = useAuth();
+  const { legacyToken, legacyUser } = useAuth();
   const [users, setUsers] = useState<AppUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(defaultFormState);
   const [submitting, setSubmitting] = useState(false);
 
-  const isAdmin = useMemo(() => user?.role === 'admin', [user]);
+  const isAdmin = useMemo(() => legacyUser?.role === 'admin', [legacyUser]);
 
   useEffect(() => {
-    if (!token || !isAdmin) return;
+    if (!legacyToken || !isAdmin) return;
     const loadUsers = async () => {
       try {
         setLoading(true);
-        const { users } = await fetchUsers(token);
+        const { users } = await fetchUsers(legacyToken);
         setUsers(users);
         setError(null);
       } catch (err: any) {
@@ -42,7 +42,7 @@ const UserManagement: React.FC = () => {
       }
     };
     loadUsers();
-  }, [token, isAdmin]);
+  }, [legacyToken, isAdmin]);
 
   const handleInputChange = (field: keyof FormState) => (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setForm((prev) => ({ ...prev, [field]: event.target.value }));
@@ -50,10 +50,10 @@ const UserManagement: React.FC = () => {
 
   const handleCreateUser = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!token) return;
+    if (!legacyToken) return;
     setSubmitting(true);
     try {
-      const { user } = await createUser(token, {
+      const { user } = await createUser(legacyToken, {
         email: form.email,
         password: form.password,
         fullName: form.fullName || undefined,
@@ -70,9 +70,9 @@ const UserManagement: React.FC = () => {
   };
 
   const handleRoleChange = async (id: number, role: UserRole) => {
-    if (!token) return;
+    if (!legacyToken) return;
     try {
-      const { user } = await updateUser(token, id, { role });
+      const { user } = await updateUser(legacyToken, id, { role });
       setUsers((prev) => prev.map((u) => (u.id === id ? user : u)));
       setError(null);
     } catch (err: any) {
@@ -81,10 +81,10 @@ const UserManagement: React.FC = () => {
   };
 
   const handleDelete = async (id: number) => {
-    if (!token) return;
+    if (!legacyToken) return;
     if (!window.confirm('Supprimer cet utilisateur ?')) return;
     try {
-      await deleteUser(token, id);
+      await deleteUser(legacyToken, id);
       setUsers((prev) => prev.filter((u) => u.id !== id));
       setError(null);
     } catch (err: any) {
@@ -205,7 +205,7 @@ const UserManagement: React.FC = () => {
                         className="border border-gray-300 rounded px-2 py-1"
                         value={item.role}
                         onChange={(event) => handleRoleChange(item.id, event.target.value as UserRole)}
-                        disabled={item.id === user?.id}
+                        disabled={item.id === legacyUser?.id}
                       >
                         <option value="user">Utilisateur</option>
                         <option value="admin">Administrateur</option>
@@ -215,7 +215,7 @@ const UserManagement: React.FC = () => {
                       {new Date(item.createdAt).toLocaleDateString('fr-FR')}
                     </td>
                     <td className="px-4 py-3 text-sm text-right">
-                      {item.id !== user?.id && (
+                      {item.id !== legacyUser?.id && (
                         <button
                           className="text-red-600 hover:underline"
                           onClick={() => handleDelete(item.id)}

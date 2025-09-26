@@ -1,6 +1,7 @@
-import React from "react";
+
 import { TrendingUp } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
+import { useFormattedBuildTime } from "../hooks/useFormattedBuildTime";
 
 type HeaderProps = {
   currentPage: string;
@@ -23,13 +24,8 @@ const NAV_ITEMS: NavItem[] = [
 
 export default function Header({ currentPage, onNavigate }: HeaderProps) {
   const { token, user, logout } = useAuth();
+  const formattedBuildTime = useFormattedBuildTime();
 
-  const renderNavButton = (item: NavItem) => {
-    if (item.requiresAuth && !token) {
-      return null;
-    }
-
-    const isActive = currentPage === item.page;
 
     return (
       <button
@@ -52,7 +48,7 @@ export default function Header({ currentPage, onNavigate }: HeaderProps) {
           onClick={() => onNavigate("home")}
         >
           <TrendingUp className="h-6 w-6" />
-          <span className="text-lg font-semibold">Focus Patrimoine</span>
+
         </div>
 
         <nav className="flex flex-wrap items-center gap-2 justify-start md:justify-center">

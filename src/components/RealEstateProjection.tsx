@@ -1,5 +1,5 @@
 // src/components/RealEstateProjection.tsx
-import React, { useEffect, useMemo, useRef, useState } from "react";
+
 import { Home as HomeIcon, BarChart } from "lucide-react";
 import {
   LineChart,
@@ -119,8 +119,7 @@ export default function RealEstateProjection({ onNavigate }: Props) {
   const [loadSimulationError, setLoadSimulationError] = useState<string | null>(null);
   const hydrationGuardRef = useRef(false);
   const hydrationTimerRef = useRef<number | null>(null);
-  const pendingSimulationIdRef = useRef<string | null>(null);
-  const pendingSimulationTitleRef = useRef<string | null>(null);
+
 
   useEffect(() => {
     return () => {
@@ -136,15 +135,13 @@ export default function RealEstateProjection({ onNavigate }: Props) {
       const simId = (params as any).simulationId as string | undefined;
       const simTitle = (params as any).title as string | undefined;
       if (simId) {
-        pendingSimulationIdRef.current = simId;
-        pendingSimulationTitleRef.current = simTitle ?? null;
+
         if (simTitle && simTitle.trim().length > 0) {
           setTitle(simTitle.trim());
         }
       }
     } else {
-      pendingSimulationIdRef.current = null;
-      pendingSimulationTitleRef.current = null;
+
       setCurrentSimulationId(null);
     }
     window.__pageParams = null;
@@ -152,16 +149,7 @@ export default function RealEstateProjection({ onNavigate }: Props) {
 
   useEffect(() => {
     if (!token) return;
-    if (!pendingSimulationIdRef.current) return;
 
-    const id = pendingSimulationIdRef.current;
-    const titleHint = pendingSimulationTitleRef.current;
-    pendingSimulationIdRef.current = null;
-    pendingSimulationTitleRef.current = null;
-    loadSimulationById(id, titleHint || undefined);
-  }, [token]);
-
-  function releaseHydrationGuardSoon() {
     if (hydrationTimerRef.current !== null) {
       window.clearTimeout(hydrationTimerRef.current);
     }
@@ -169,14 +157,7 @@ export default function RealEstateProjection({ onNavigate }: Props) {
       hydrationGuardRef.current = false;
       hydrationTimerRef.current = null;
     }, 0);
-  }
 
-  function applySimulationPayload(payload: StoredSimulationPayload | null, simulationTitle?: string | null) {
-    hydrationGuardRef.current = true;
-
-    const inputs = payload?.inputs ?? {};
-    const meta = payload?.meta ?? {};
-    const resolvedPropertyType = (meta.propertyType || inputs.propertyType || "appartement") as
       | "appartement"
       | "immeuble"
       | "colocation";
@@ -248,29 +229,7 @@ export default function RealEstateProjection({ onNavigate }: Props) {
     setSaveErr(null);
     setSaveOk(false);
     releaseHydrationGuardSoon();
-  }
 
-  async function loadSimulationById(id: string, titleHint?: string) {
-    if (!token) return;
-
-    setLoadingSimulation(true);
-    setLoadSimulationError(null);
-    try {
-      const res = await af(`/api/simulations/${id}`);
-      const data = (await res.json().catch(() => ({}))) as SimulationResponse;
-      if (!res.ok) {
-        throw new Error((data as any)?.error || `HTTP ${res.status}`);
-      }
-
-      setCurrentSimulationId(data.id || id);
-      applySimulationPayload(data.payload ?? null, data.title ?? titleHint ?? null);
-    } catch (e: any) {
-      setCurrentSimulationId(null);
-      setLoadSimulationError(e?.message || "Impossible de charger la simulation.");
-    } finally {
-      setLoadingSimulation(false);
-    }
-  }
 
   // ------------------ Effets calculs de base ------------------
   useEffect(() => {
