@@ -1,6 +1,7 @@
 import React, { useMemo } from "react";
 import { TrendingUp } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
+import { useFormattedBuildTime } from "../hooks/useFormattedBuildTime";
 
 type HeaderProps = {
   currentPage: string;
@@ -23,6 +24,7 @@ const NAV_ITEMS: NavItem[] = [
 
 export default function Header({ currentPage, onNavigate }: HeaderProps) {
   const { token, user, logout } = useAuth();
+  const formattedBuildTime = useFormattedBuildTime();
 
   const formattedBuildTime = useMemo(() => {
     const rawBuildTime =
@@ -83,7 +85,7 @@ export default function Header({ currentPage, onNavigate }: HeaderProps) {
           <div className="flex flex-col leading-tight">
             <span className="text-lg font-semibold">Focus Patrimoine</span>
             {formattedBuildTime && (
-              <span className="text-xs text-gray-600">
+
                 Dernière compilation : {formattedBuildTime}
               </span>
             )}
