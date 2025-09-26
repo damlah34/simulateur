@@ -1,7 +1,4 @@
-import React from "react";
-import { TrendingUp } from "lucide-react";
-import { useAuth } from "../contexts/AuthContext";
-import { useBuildTimestampLabel } from "../hooks/useFormattedBuildTime";
+
 
 type HeaderProps = {
   currentPage: string;
@@ -24,14 +21,7 @@ const NAV_ITEMS: NavItem[] = [
 
 export default function Header({ currentPage, onNavigate }: HeaderProps) {
   const { token, user, logout } = useAuth();
-  const buildTimestampLabel = useBuildTimestampLabel();
 
-  const renderNavButton = (item: NavItem) => {
-    if (item.requiresAuth && !token) {
-      return null;
-    }
-
-    const isActive = currentPage === item.page;
 
     return (
       <button
@@ -54,10 +44,7 @@ export default function Header({ currentPage, onNavigate }: HeaderProps) {
           onClick={() => onNavigate("home")}
         >
           <TrendingUp className="h-6 w-6" />
-          <div className="flex flex-col leading-tight">
-            <span className="text-lg font-semibold">Focus Patrimoine</span>
-            <span className="text-[11px] text-gray-500">{buildTimestampLabel}</span>
-          </div>
+
         </div>
 
         <nav className="flex flex-wrap items-center gap-2 justify-start md:justify-center">
